@@ -233,7 +233,7 @@ public class PA_ProblemData {
 
         //everything is good, create the list of snapshots. First 'n' snapshots are input, final 1 snapshot is output.
         List<Snapshot> snapshotsToUse = new ArrayList<>();
-        for (int i = indexOfCurrentTimestamp; i < indexOfFinalTimestampNeededForInput; i++) {
+        for (int i = indexOfCurrentTimestamp; i <= indexOfFinalTimestampNeededForInput; i++) {
             snapshotsToUse.add(
                     getSnapshotByTimestamp(timestamps.get(i))
                     //snapshotService.getSnapshotByTimestamp(timestamps.get(i))
