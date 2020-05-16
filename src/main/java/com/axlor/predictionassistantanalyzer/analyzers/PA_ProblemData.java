@@ -12,6 +12,7 @@ import com.axlor.predictionassistantanalyzer.service.SnapshotService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Timer;
 
 public class PA_ProblemData {
 
@@ -50,13 +51,12 @@ public class PA_ProblemData {
         //This brings the input layer size to 3(30+1) = 93
 
         //Input Layer: all these need to be converted to doubles in some way. Completely fine as long as it is consistent, which it is.
-        //1:Enumerated/category value: 0=BuyNo, 1=BuyYes
-        //2:nonUniqueMarketId -- some Markets are more volatile than others, so this input could help maybe
-        //3:nonUniqueContractId -- some Contracts are more volatile than others, this input could matter in training the NN
+        //1:nonUniqueMarketId -- some Markets are more volatile than others, so this input could help maybe
+        //2:nonUniqueContractId -- some Contracts are more volatile than others, this input could matter in training the NN
         //then we loop over Snapshots, getting the stuff we need:
-        //4: contract buyYes cost
-        //5: contract buyNo cost    --if buyNo goes down, it usually means buyYes goes up, so we should let NN have access to both
-        //6: timestamp/1000.0        --timestamp needs to be a double, so we need to make it smaller, having it be to the second instead of millisecond is fine.
+        //3: contract buyYes cost
+        //4: contract buyNo cost    --if buyNo goes down, it usually means buyYes goes up, so we should let NN have access to both
+        //5: timestamp/1000.0        --timestamp needs to be a double, so we need to make it smaller, having it be to the second instead of millisecond is fine.
         //                                      --also, may or may not want timestamp, I want to play with this.
         //repeat 4-6 for n sets of Snapshots, 60 mins = 30 snapshots for example.
 
@@ -66,19 +66,98 @@ public class PA_ProblemData {
         //This creates one entry to input and output layers, we want to create an entry for every Contract for every Snapshot window we can find that the data is available for.
         //Likely 10s of thousands. May need to cull.
 
+        //2 for market and contract id's
+        //3 for the buyYes, buyNo, and timestamp
+                //muliplied by the number of snapshots we are looking for that historical data in
+        inputLayerSize = 2 + (3 * (inputTimeFrame/timeBetweenSnapshots));
+        outputLayerSize = 2; //buyYes prediction and buyNo prediction.
+
         List<SnapshotMini> snapshotsMini = snapshotService.getAllSnapshots_mini();
-        snapshots = getAllSnapshotsFromDB(snapshotsMini,snapshotService);
+        snapshots = getAllSnapshotsFromDB(snapshotsMini, snapshotService);
 
         //for each Nth Snapshot, see if we have the Snapshots we need to build a Problem(input and output layers)
-        for (int i = 0; i < snapshotsMini.size(); i=i+testEvery_X_Snapshots) {
+        for (int i = 0; i < snapshotsMini.size(); i = i + testEvery_X_Snapshots) {
             List<Snapshot> problemSnapshots = getProblemSnapshotsFromSnapshot(snapshotsMini.get(i), snapshotService);
             if (problemSnapshots == null) {
                 System.out.println(i + ": Could not create problemSnapshots from starting snapshot id:" + snapshotsMini.get(i).getHashID());
                 continue;
             }
             System.out.println(i + ": Successfully created problemSnapshots from starting snapshot id: " + snapshotsMini.get(i).getHashID());
-            
+            System.out.println("problemSnapshots Size: " + problemSnapshots.size() + " --- Expected: " + ((inputTimeFrame/timeBetweenSnapshots)+1)  );
+            //we have a set of snapshots to work with to create input and output layers for all the contracts in them.
+            //for each market, look at each contract
+            //for each contract, build input and output arrays
+            List<Market> markets = problemSnapshots.get(0).getMarkets(); //this is the oldest snapshot's market list. Newer snapshots may have new markets, but we don't care.
+            for (Market market : markets) {
+                List<Contract> contracts = market.getContracts();
+                for (Contract contract : contracts) {
+                    List<Double> inputLayer = new ArrayList<>();
+                    double[] outputLayerArr = new double[2];
+
+                    inputLayer.add((double) market.getId()); //nonUniqueMarketId
+                    inputLayer.add((double) contract.getId()); //nonUniqueContractId
+
+                    //for each snapshot in this problem, find this contract's buyNo and and it.
+                    for (int snapIndex = 0; snapIndex < problemSnapshots.size() - 1; snapIndex++) { //the last element of problemSnapshots is the snapshot containing the 'future' buyYes and buyNo values we want for output layer
+                        Market currMarket = getMarket(problemSnapshots.get(snapIndex), market.getId());
+                        if (currMarket == null) {
+                            continue;
+                        }
+                        for (int j = 0; j < currMarket.getContracts().size(); j++) {
+                            if (currMarket.getContracts().get(j).getId() == contract.getId()) {
+                                inputLayer.add(currMarket.getContracts().get(j).getBestBuyYesCost());
+                                inputLayer.add(currMarket.getContracts().get(j).getBestBuyNoCost());
+                                long tempTime = problemSnapshots.get(snapIndex).getTimestamp()/1000;//timestamp in seconds
+                                inputLayer.add((double) tempTime);
+                            }
+                        }
+                    }
+                    //input layer is done, just need to create output layer
+                    Contract finalContract = getContract(problemSnapshots.get(problemSnapshots.size()-1), market.getId(), contract.getId());
+                    if(finalContract == null){
+                        continue;
+                    }
+                    outputLayerArr[0] = finalContract.getBestBuyYesCost();
+                    outputLayerArr[1] = finalContract.getBestBuyNoCost();
+
+                    //final error checking
+                    if(inputLayer.size() == inputLayerSize){
+                        //convert them to arrays and add them.
+                        double[] inputLayerArr = new double[inputLayer.size()];
+                        for (int j = 0; j < inputLayerArr.length; j++) {
+                            inputLayerArr[i] = inputLayer.get(i);
+                        }
+                        inputLayers.add(inputLayerArr);
+                        outputLayers.add(outputLayerArr);
+                        System.out.println("~~~~~~~Successfully Added input/output layers to problem arrays. Problem set ready for NN");
+                    }
+                    else{
+                        //System.out.println("Input layer size (" + inputLayer.size() +") did not match required input layer size (" + inputLayerSize + ")");
+                        System.out.print(".");
+                    }
+                }
+            }
         }
+    }
+
+    private Contract getContract(Snapshot snapshot, Integer nonUniqueMarketId, int contractId) {
+        for (int i = 0; i < snapshot.getMarkets().size(); i++) {
+            for (int j = 0; j < snapshot.getMarkets().get(i).getContracts().size(); j++) {
+                if(contractId == snapshot.getMarkets().get(i).getContracts().get(j).getId()){
+                    return snapshot.getMarkets().get(i).getContracts().get(j);
+                }
+            }
+        }
+        return null;
+    }
+
+    private Market getMarket(Snapshot snapshot, int nonUniqueMarketId) {
+        for (int i = 0; i < snapshot.getMarkets().size(); i++) {
+            if (snapshot.getMarkets().get(i).getId() == nonUniqueMarketId) {
+                return snapshot.getMarkets().get(i);
+            }
+        }
+        return null;
     }
 
     private List<Snapshot> getAllSnapshotsFromDB(List<SnapshotMini> snapshots, SnapshotService snapshotService) throws SnapshotNotFoundException, NoSnapshotsInDatabaseException {
@@ -90,10 +169,10 @@ public class PA_ProblemData {
         long estimatedTimeLeft;
         for (int i = 0; i < snapshots.size(); i++) {
             fulldb.add(snapshotService.getSnapshot(snapshots.get(i).getHashID()));
-            if(i%100==0){
+            if (i % 100 == 0 && i>0) {
                 currentTime = System.currentTimeMillis();
                 //estimated time remaining = (time/snapshot) * remaining snapshots
-                estimatedTimeLeft = ( ((currentTime-startTime)/100) * (snapshots.size() - i)) / 1000;
+                estimatedTimeLeft = (((currentTime - startTime) / 100) * (snapshots.size() - i)) / 1000;
                 System.out.print(i + ": Added Snapshot to local repo. Id:" + snapshots.get(i).getHashID());
                 System.out.println("  --- Estimated time remaining: " + estimatedTimeLeft + " seconds");
                 startTime = System.currentTimeMillis();
@@ -156,8 +235,8 @@ public class PA_ProblemData {
         List<Snapshot> snapshotsToUse = new ArrayList<>();
         for (int i = indexOfCurrentTimestamp; i < indexOfFinalTimestampNeededForInput; i++) {
             snapshotsToUse.add(
-                 getSnapshotByTimestamp(timestamps.get(i))
-                //snapshotService.getSnapshotByTimestamp(timestamps.get(i))
+                    getSnapshotByTimestamp(timestamps.get(i))
+                    //snapshotService.getSnapshotByTimestamp(timestamps.get(i))
             );
         }
         snapshotsToUse.add(outputSnapshot); //add the output layer snapshot
