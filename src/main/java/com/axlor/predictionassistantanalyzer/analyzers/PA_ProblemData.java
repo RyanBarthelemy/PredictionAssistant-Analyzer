@@ -3,6 +3,8 @@ package com.axlor.predictionassistantanalyzer.analyzers;
 import com.axlor.predictionassistantanalyzer.exception.NoSnapshotsInDatabaseException;
 import com.axlor.predictionassistantanalyzer.exception.SnapshotCountMismatchException;
 import com.axlor.predictionassistantanalyzer.exception.SnapshotNotFoundException;
+import com.axlor.predictionassistantanalyzer.model.Contract;
+import com.axlor.predictionassistantanalyzer.model.Market;
 import com.axlor.predictionassistantanalyzer.model.Snapshot;
 import com.axlor.predictionassistantanalyzer.model.mini.SnapshotMini;
 import com.axlor.predictionassistantanalyzer.service.SnapshotService;
@@ -13,6 +15,7 @@ import java.util.List;
 
 public class PA_ProblemData {
 
+
     private int inputTimeFrame = 60; //minutes
 
     private int timeBetweenSnapshots = 2; //2 minutes between Snapshots saved to DB, Prediction Assistant Data does this, we just need to know it.
@@ -20,6 +23,15 @@ public class PA_ProblemData {
 
     private int predictionTime = 30; //minutes. How much time after the final input snapshot do we want out prediction to be for.
     private int outputErrorMax = 3;
+
+    //We can look at every snapshot as a potential starting point for our input layer problems we are building.
+    //This can get very expensive and massive in terms of data. This field allows us to define how many snapshots we want to test.
+    //1 = test every snapshot
+    //2 = test every other snapshot,
+    //4 = test every 4th snapshot
+    private int testEvery_X_Snapshots = 4; //THIS CAN NEVER BE 0. must be a positive integer.
+
+    private List<Snapshot> snapshots;
 
 
     private int inputLayerSize; //number of neurons in input layer     \  These are different
@@ -54,17 +66,40 @@ public class PA_ProblemData {
         //This creates one entry to input and output layers, we want to create an entry for every Contract for every Snapshot window we can find that the data is available for.
         //Likely 10s of thousands. May need to cull.
 
-        List<SnapshotMini> snapshots = snapshotService.getAllSnapshots_mini();
-        //for each Snapshot, see if we have the Snapshots we need to build a Problem(input and output layers)
-        for (int i = 0; i < snapshots.size(); i++) {
-            List<Snapshot> problemSnapshots = getProblemSnapshotsFromSnapshot(snapshots.get(i), snapshotService);
+        List<SnapshotMini> snapshotsMini = snapshotService.getAllSnapshots_mini();
+        snapshots = getAllSnapshotsFromDB(snapshotsMini,snapshotService);
+
+        //for each Nth Snapshot, see if we have the Snapshots we need to build a Problem(input and output layers)
+        for (int i = 0; i < snapshotsMini.size(); i=i+testEvery_X_Snapshots) {
+            List<Snapshot> problemSnapshots = getProblemSnapshotsFromSnapshot(snapshotsMini.get(i), snapshotService);
             if (problemSnapshots == null) {
-                System.out.println(i + ": Could not create problemSnapshots from starting snapshot id:" + snapshots.get(i).getHashID());
+                System.out.println(i + ": Could not create problemSnapshots from starting snapshot id:" + snapshotsMini.get(i).getHashID());
                 continue;
             }
-            System.out.println(i + ": Successfully created problemSnapshots from starting snapshot id: " + snapshots.get(i).getHashID());
+            System.out.println(i + ": Successfully created problemSnapshots from starting snapshot id: " + snapshotsMini.get(i).getHashID());
+            
         }
+    }
 
+    private List<Snapshot> getAllSnapshotsFromDB(List<SnapshotMini> snapshots, SnapshotService snapshotService) throws SnapshotNotFoundException, NoSnapshotsInDatabaseException {
+        List<Snapshot> fulldb = new ArrayList<>();
+        System.out.println("Testing reading in all snapshots.");
+        System.out.println("Total number of snapshots = " + snapshots.size());
+        long startTime = System.currentTimeMillis();
+        long currentTime;
+        long estimatedTimeLeft;
+        for (int i = 0; i < snapshots.size(); i++) {
+            fulldb.add(snapshotService.getSnapshot(snapshots.get(i).getHashID()));
+            if(i%100==0){
+                currentTime = System.currentTimeMillis();
+                //estimated time remaining = (time/snapshot) * remaining snapshots
+                estimatedTimeLeft = ( ((currentTime-startTime)/100) * (snapshots.size() - i)) / 1000;
+                System.out.print(i + ": Added Snapshot to local repo. Id:" + snapshots.get(i).getHashID());
+                System.out.println("  --- Estimated time remaining: " + estimatedTimeLeft + " seconds");
+                startTime = System.currentTimeMillis();
+            }
+        }
+        return fulldb;
     }
 
     private List<Snapshot> getProblemSnapshotsFromSnapshot(SnapshotMini snapshotMini, SnapshotService snapshotService) throws SnapshotNotFoundException, NoSnapshotsInDatabaseException {
@@ -121,12 +156,24 @@ public class PA_ProblemData {
         List<Snapshot> snapshotsToUse = new ArrayList<>();
         for (int i = indexOfCurrentTimestamp; i < indexOfFinalTimestampNeededForInput; i++) {
             snapshotsToUse.add(
-                snapshotService.getSnapshotClosesToTimestamp(timestamps.get(i))
+                 getSnapshotByTimestamp(timestamps.get(i))
+                //snapshotService.getSnapshotByTimestamp(timestamps.get(i))
             );
         }
         snapshotsToUse.add(outputSnapshot); //add the output layer snapshot
 
         return snapshotsToUse;
+    }
+
+    private Snapshot getSnapshotByTimestamp(long timestamp) {
+        for (Snapshot snapshot : snapshots) {
+            if (snapshot.getTimestamp() == timestamp) {
+                return snapshot;
+            }
+        }
+        System.out.println("Could not find snapshot with timestamp: " + timestamp);
+        System.out.println("You should never be able to get here....");
+        return null;
     }
 
     public int getInputLayerSize() {

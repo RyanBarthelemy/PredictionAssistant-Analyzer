@@ -101,6 +101,7 @@ public class SnapshotService {
      * @return the latest Snapshot
      * @throws NoSnapshotsInDatabaseException Thrown when no data is in database.
      */
+
     public Snapshot getLatestSnapshot() throws NoSnapshotsInDatabaseException {
         if (snapshotRepository.count() == 0) {
             throw new NoSnapshotsInDatabaseException();
@@ -121,6 +122,10 @@ public class SnapshotService {
             }
         }
         return snapshotRepository.findSnapshotByTimestamp(snapshotTimestampToUse);
+    }
+
+    public Snapshot getSnapshotByTimestamp(long timestamp){
+        return snapshotRepository.findSnapshotByTimestamp(timestamp);
     }
 
     public List<Long> getTimestamps(){

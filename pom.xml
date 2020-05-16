@@ -46,6 +46,10 @@
             <version>2.10.4</version>
         </dependency>
 
+        <dependency>       <!-- spring cache dependency -->
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
 
     </dependencies>
 
