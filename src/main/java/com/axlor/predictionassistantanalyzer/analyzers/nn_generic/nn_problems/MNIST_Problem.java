@@ -136,7 +136,6 @@ public class MNIST_Problem implements Serializable{
         } catch (IOException ex) {
             System.out.println("Caught IOException, did NOT save network to file:" + file);
         }
-        
     }
     
     public static MNIST_Problem load_MNIST_data(String file){
@@ -154,7 +153,6 @@ public class MNIST_Problem implements Serializable{
         } catch (ClassNotFoundException ex) {
             System.out.println("Caught ClassNotFoundException trying to caste object to MNIST_Problem, returning null.");
         }
-          
         return null;
     }
 }

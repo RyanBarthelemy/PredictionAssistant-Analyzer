@@ -1,7 +1,6 @@
-package com.axlor.predictionassistantanalyzer.analyzers;
+package com.axlor.predictionassistantanalyzer.analyzers.nn_pa;
 
 import com.axlor.predictionassistantanalyzer.exception.NoSnapshotsInDatabaseException;
-import com.axlor.predictionassistantanalyzer.exception.SnapshotCountMismatchException;
 import com.axlor.predictionassistantanalyzer.exception.SnapshotNotFoundException;
 import com.axlor.predictionassistantanalyzer.model.Contract;
 import com.axlor.predictionassistantanalyzer.model.Market;
@@ -9,13 +8,15 @@ import com.axlor.predictionassistantanalyzer.model.Snapshot;
 import com.axlor.predictionassistantanalyzer.model.mini.SnapshotMini;
 import com.axlor.predictionassistantanalyzer.service.SnapshotService;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class PA_ProblemData {
+public class PA_ProblemData implements  Serializable{
 
+    private static final long serialVersionUID = 8280092821309185399L; //alt+enter, randomly gen
 
     private int inputTimeFrame = 60; //minutes
 
@@ -30,9 +31,7 @@ public class PA_ProblemData {
     //1 = test every snapshot
     //2 = test every other snapshot,
     //4 = test every 4th snapshot
-    private int testEvery_X_Snapshots = 15; //THIS CAN NEVER BE 0. must be a positive integer.
-
-    private List<Snapshot> snapshots;
+    private int testEvery_X_Snapshots = 10; //THIS CAN NEVER BE 0. must be a positive integer.
 
     private int inputLayerSize; //number of neurons in input layer     \  These are different
     private int outputLayerSize; //number of neurons in output layer  /   These are different
@@ -41,7 +40,7 @@ public class PA_ProblemData {
     private List<double[]> inputLayers = new ArrayList<>();  //probably noticeably better performance if these were both 2d arrays
     private List<double[]> outputLayers = new ArrayList<>(); //although we only build the problem data once, so maybe not a big deal, should profile it though
 
-    public PA_ProblemData(SnapshotService snapshotService) throws SnapshotCountMismatchException, NoSnapshotsInDatabaseException, SnapshotNotFoundException {
+    public PA_ProblemData(SnapshotService snapshotService) throws Exception {
         //this is where heavy lifting happens, we need to build the input layers and output layers from existing Snapshots in the database.
         //we want to look at every contract in the db... so we have a lot of data to get, validate, and parse.
 
@@ -73,16 +72,28 @@ public class PA_ProblemData {
 
         List<SnapshotMini> snapshotsMini = snapshotService.getAllSnapshots_mini();
         List<Long> timestamps = snapshotService.getTimestamps();
-        snapshots = getAllSnapshotsFromDB(snapshotsMini, snapshotService);
+        List<Snapshot> snapshots = getAllSnapshotsFromDB(snapshotsMini, snapshotService);
+
+        if(testEvery_X_Snapshots <= 0){
+            System.out.println("testEvery_X_Snapshots must be a positive integer. Throwing exception");
+            throw new Exception("testEvery_X_Snapshots must be a positive integer!");
+        }
 
         //for each Nth Snapshot, see if we have the Snapshots we need to build a Problem(input and output layers)
+        System.out.println("Building Problem Data from Snapshots. This may also take some time...");
+        System.out.println("Total Snapshots to examine: " + snapshotsMini.size() + " Snapshots");
         for (int i = 0; i < snapshotsMini.size(); i = i + testEvery_X_Snapshots) {
-            List<Snapshot> problemSnapshots = getProblemSnapshotsFromSnapshot(snapshotsMini.get(i), timestamps);
+
+            if(i%(20*testEvery_X_Snapshots) == 0){
+                System.out.print(".");
+            }
+
+            List<Snapshot> problemSnapshots = getProblemSnapshotsFromSnapshot(snapshotsMini.get(i), timestamps, snapshots);
             if (problemSnapshots == null) {
-                System.out.println(i + ": Could not create problemSnapshots from starting snapshot id:" + snapshotsMini.get(i).getHashID());
+                //System.out.println(i + ": Could not create problemSnapshots from starting snapshot id:" + snapshotsMini.get(i).getHashID());
                 continue;
             }
-            System.out.println(i + ": Successfully created problemSnapshots from starting snapshot id: " + snapshotsMini.get(i).getHashID());
+            //System.out.println(i + ": Successfully created problemSnapshots from starting snapshot id: " + snapshotsMini.get(i).getHashID());
             //System.out.println("problemSnapshots Size: " + problemSnapshots.size() + " --- Expected: " + ((inputTimeFrame/timeBetweenSnapshots)+1)  );
             //we have a set of snapshots to work with to create input and output layers for all the contracts in them.
             //for each market, look at each contract
@@ -175,7 +186,7 @@ public class PA_ProblemData {
 
     private List<Snapshot> getAllSnapshotsFromDB(List<SnapshotMini> snapshots, SnapshotService snapshotService) throws SnapshotNotFoundException, NoSnapshotsInDatabaseException {
         List<Snapshot> fulldb = new ArrayList<>();
-        System.out.println("Testing reading in all snapshots.");
+        System.out.println("Reading in all Snapshots from DB...");
         System.out.println("Total number of snapshots = " + snapshots.size());
         long startTime = System.currentTimeMillis();
         long currentTime;
@@ -194,15 +205,15 @@ public class PA_ProblemData {
         return fulldb;
     }
 
-    private List<Snapshot> getProblemSnapshotsFromSnapshot(SnapshotMini snapshotMini, List<Long> timestamps){
+    private List<Snapshot> getProblemSnapshotsFromSnapshot(SnapshotMini snapshotMini, List<Long> timestamps, List<Snapshot> snapshots){
         Collections.reverse(timestamps); //so timestamps are in ascending order, not descending order. Will make it easier to work with going forward
-        Snapshot currentSnapshot = getSnapshotById(snapshotMini.getHashID());
+        Snapshot currentSnapshot = getSnapshotById(snapshotMini.getHashID(), snapshots);
         long currentTimestamp = currentSnapshot.getTimestamp();
 
-        return buildSnapshotList(currentTimestamp, timestamps);
+        return buildSnapshotList(currentTimestamp, timestamps, snapshots);
     }
 
-    private Snapshot getSnapshotById(Integer hashID) {
+    private Snapshot getSnapshotById(Integer hashID, List<Snapshot> snapshots) {
         for (Snapshot snapshot : snapshots) {
             if (snapshot.getHashId().equals(hashID)) {
                 return snapshot;
@@ -211,14 +222,14 @@ public class PA_ProblemData {
         return null;
     }
 
-    private List<Snapshot> buildSnapshotList(long currentTimestamp, List<Long> timestamps) {
+    private List<Snapshot> buildSnapshotList(long currentTimestamp, List<Long> timestamps, List<Snapshot> snapshots) {
         //are there enough timestamps AFTER currentTimestamp including it?
         //if we are training the NN using the last 60 mins of data, we would need 30 snapshots for input
         //we want to predict what values will be 30 mins after last snapshots for output, so we want a timestamp = finalTimestamp+30mins, find closest, see if it is within 2 mins of required
 
         int indexOfCurrentTimestamp = timestamps.indexOf(currentTimestamp);
         if (indexOfCurrentTimestamp == -1) {
-            System.out.println("null 1");
+            //System.out.println("null 1");
             return null;
         }
 
@@ -226,7 +237,7 @@ public class PA_ProblemData {
         int numOfRequiredSnapshotsForInput = (inputTimeFrame / timeBetweenSnapshots);
         //are there enough snapshots after our starting point to even try?
         if (indexOfCurrentTimestamp + numOfRequiredSnapshotsForInput > timestamps.size()) {
-            System.out.println("null 2");
+            //System.out.println("null 2");
             return null;
         }
 
@@ -238,17 +249,17 @@ public class PA_ProblemData {
         //System.out.println("Actual time frame: " + actualTimeframe);
         long actualError = Math.abs(actualTimeframe - inputTimeFrame);
         if (actualError > acceptedError) {
-            System.out.println("null 3: ActualError:" + actualError + " ---- AcceptedError:" + acceptedError);
+            //System.out.println("null 3: ActualError:" + actualError + " ---- AcceptedError:" + acceptedError);
             return null;
         }
 
         //is the snapshot required for the output layer close enough to what we need for it to work?
         long theoreticalTimestampForOutput = finalTimestampOfInput + (predictionTime * 60000);
-        Snapshot outputSnapshot = getSnapshotClosesToTimestamp(theoreticalTimestampForOutput, timestamps);
+        Snapshot outputSnapshot = getSnapshotClosesToTimestamp(theoreticalTimestampForOutput, timestamps, snapshots);
         long actualTimestampForOutput = outputSnapshot.getTimestamp();
         long outputErrorActual = Math.abs(theoreticalTimestampForOutput - actualTimestampForOutput) / 60000;
         if (outputErrorActual > outputErrorMax) {
-            System.out.println("null 4: outputErrorActual:" + outputErrorActual + " --- outputErrorMax:" + outputErrorMax);
+            //System.out.println("null 4: outputErrorActual:" + outputErrorActual + " --- outputErrorMax:" + outputErrorMax);
             return null;
         }
 
@@ -256,8 +267,7 @@ public class PA_ProblemData {
         List<Snapshot> snapshotsToUse = new ArrayList<>();
         for (int i = indexOfCurrentTimestamp; i <= indexOfFinalTimestampNeededForInput; i++) {
             snapshotsToUse.add(
-                    getSnapshotByTimestamp(timestamps.get(i))
-                    //snapshotService.getSnapshotByTimestamp(timestamps.get(i))
+                    getSnapshotByTimestamp(timestamps.get(i), snapshots)
             );
         }
         snapshotsToUse.add(outputSnapshot); //add the output layer snapshot
@@ -265,7 +275,7 @@ public class PA_ProblemData {
         return snapshotsToUse;
     }
 
-    private Snapshot getSnapshotClosesToTimestamp(long theoreticalTimestampForOutput, List<Long> timestamps) {
+    private Snapshot getSnapshotClosesToTimestamp(long theoreticalTimestampForOutput, List<Long> timestamps, List<Snapshot> snapshots) {
         long snapshotTimestampToUse = -1;
 
         long difference = Long.MAX_VALUE;
@@ -275,10 +285,10 @@ public class PA_ProblemData {
                 difference = Math.abs(timestamp - theoreticalTimestampForOutput);
             }
         }
-        return getSnapshotByTimestamp(snapshotTimestampToUse);
+        return getSnapshotByTimestamp(snapshotTimestampToUse, snapshots);
     }
 
-    private Snapshot getSnapshotByTimestamp(long timestamp) {
+    private Snapshot getSnapshotByTimestamp(long timestamp, List<Snapshot> snapshots) {
         for (Snapshot snapshot : snapshots) {
             if (snapshot.getTimestamp() == timestamp) {
                 return snapshot;
@@ -308,4 +318,38 @@ public class PA_ProblemData {
     public List<double[]> getOutputLayers() {
         return outputLayers;
     }
+
+    public void save_PA_ProblemData(String file){
+        File saveFile = new File(file);
+        try {
+            ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(saveFile));
+            oos.writeObject(this);
+
+            oos.flush();
+            oos.close();
+            System.out.println("Successfully saved PA_ProblemData object to " + file);
+
+        } catch (IOException ex) {
+            System.out.println("Caught IOException, did NOT save network to file:" + file);
+        }
+    }
+
+    public static PA_ProblemData load_MNIST_data(String file){
+        File inputFile = new File(file);
+        try {
+            ObjectInputStream ois = new ObjectInputStream(new FileInputStream(inputFile));
+            PA_ProblemData problem_data = (PA_ProblemData) ois.readObject();
+            ois.close();
+
+            return problem_data;
+
+        } catch (IOException ex) {
+            System.out.println("Caught an IOException trying to load data from file: " + file);
+            System.out.println("Returning null.");
+        } catch (ClassNotFoundException ex) {
+            System.out.println("Caught ClassNotFoundException trying to caste object to PA_ProblemData, returning null.");
+        }
+        return null;
+    }
+
 }

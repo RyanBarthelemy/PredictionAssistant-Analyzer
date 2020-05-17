@@ -1,7 +1,6 @@
-package com.axlor.predictionassistantanalyzer.analyzers;
+package com.axlor.predictionassistantanalyzer.analyzers.nn_pa;
 
 import com.axlor.predictionassistantanalyzer.analyzers.nn_generic.NN_Generic;
-import com.axlor.predictionassistantanalyzer.analyzers.nn_generic.TrainingDataSet;
 import com.axlor.predictionassistantanalyzer.exception.NoSnapshotsInDatabaseException;
 import com.axlor.predictionassistantanalyzer.exception.SnapshotCountMismatchException;
 import com.axlor.predictionassistantanalyzer.exception.SnapshotNotFoundException;
@@ -24,9 +23,12 @@ public class NN_PA_Trainer {
         int inputLayerSize;
         int outputLayerSize;
         String networkFilename = "NN_PA_obj";
+        String problemDataFilename = "PA_ProblemData_obj";
 
         System.out.println("Building PA training data, this could take a long time...");
-        PA_ProblemData pa_trainData = new PA_ProblemData(snapshotService); //this could take a while
+        //PA_ProblemData pa_trainData = new PA_ProblemData(snapshotService); //this could take a while
+        PA_ProblemData pa_trainData = get_PA_ProblemData(problemDataFilename);
+
 
         /*
         System.out.println("PA_ProblemData object created with " + pa_trainData.getNumOfProblems() + "problem data to train with.");
@@ -46,6 +48,28 @@ public class NN_PA_Trainer {
 
         //neural_network.trainNetworkUsingTrainingDataSet(trainingDataSet,100,100);
 */
+    }
+
+    private PA_ProblemData get_PA_ProblemData(String problemDataFilename) throws SnapshotCountMismatchException, NoSnapshotsInDatabaseException, SnapshotNotFoundException {
+        System.out.println("Attempting to load problem data from file: " + problemDataFilename);
+        PA_ProblemData problemData = PA_ProblemData.load_MNIST_data(problemDataFilename);
+
+        if(problemData == null){
+            System.out.println("Could not load PA_ProblemData from file to object for whatever reason, creating new problem data object.");
+            System.out.println("This could take quite some time...");
+
+            try {
+                problemData = new PA_ProblemData(snapshotService);
+            } catch (Exception e) {
+                return null;
+            }
+            System.out.println("Saving problem data object for later use... this may take quite some time as well.");
+            problemData.save_PA_ProblemData(problemDataFilename);
+
+            return problemData;
+        }
+        System.out.println("Successfully loaded problem data from " + problemDataFilename);
+        return problemData;
     }
 
 
