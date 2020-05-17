@@ -10,9 +10,9 @@ import com.axlor.predictionassistantanalyzer.model.mini.SnapshotMini;
 import com.axlor.predictionassistantanalyzer.service.SnapshotService;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Timer;
 
 public class PA_ProblemData {
 
@@ -30,17 +30,16 @@ public class PA_ProblemData {
     //1 = test every snapshot
     //2 = test every other snapshot,
     //4 = test every 4th snapshot
-    private int testEvery_X_Snapshots = 4; //THIS CAN NEVER BE 0. must be a positive integer.
+    private int testEvery_X_Snapshots = 15; //THIS CAN NEVER BE 0. must be a positive integer.
 
     private List<Snapshot> snapshots;
-
 
     private int inputLayerSize; //number of neurons in input layer     \  These are different
     private int outputLayerSize; //number of neurons in output layer  /   These are different
 
     //the sizes of these lists need to be the same, the size of the Lists represents how man Problems/Sets of data we have to train with
-    private List<double[]> inputLayers;  //probably noticeably better performance if these were both 2d arrays
-    private List<double[]> outputLayers; //although we only build the problem data once, so maybe not a big deal, should profile it though
+    private List<double[]> inputLayers = new ArrayList<>();  //probably noticeably better performance if these were both 2d arrays
+    private List<double[]> outputLayers = new ArrayList<>(); //although we only build the problem data once, so maybe not a big deal, should profile it though
 
     public PA_ProblemData(SnapshotService snapshotService) throws SnapshotCountMismatchException, NoSnapshotsInDatabaseException, SnapshotNotFoundException {
         //this is where heavy lifting happens, we need to build the input layers and output layers from existing Snapshots in the database.
@@ -73,17 +72,18 @@ public class PA_ProblemData {
         outputLayerSize = 2; //buyYes prediction and buyNo prediction.
 
         List<SnapshotMini> snapshotsMini = snapshotService.getAllSnapshots_mini();
+        List<Long> timestamps = snapshotService.getTimestamps();
         snapshots = getAllSnapshotsFromDB(snapshotsMini, snapshotService);
 
         //for each Nth Snapshot, see if we have the Snapshots we need to build a Problem(input and output layers)
         for (int i = 0; i < snapshotsMini.size(); i = i + testEvery_X_Snapshots) {
-            List<Snapshot> problemSnapshots = getProblemSnapshotsFromSnapshot(snapshotsMini.get(i), snapshotService);
+            List<Snapshot> problemSnapshots = getProblemSnapshotsFromSnapshot(snapshotsMini.get(i), timestamps);
             if (problemSnapshots == null) {
                 System.out.println(i + ": Could not create problemSnapshots from starting snapshot id:" + snapshotsMini.get(i).getHashID());
                 continue;
             }
             System.out.println(i + ": Successfully created problemSnapshots from starting snapshot id: " + snapshotsMini.get(i).getHashID());
-            System.out.println("problemSnapshots Size: " + problemSnapshots.size() + " --- Expected: " + ((inputTimeFrame/timeBetweenSnapshots)+1)  );
+            //System.out.println("problemSnapshots Size: " + problemSnapshots.size() + " --- Expected: " + ((inputTimeFrame/timeBetweenSnapshots)+1)  );
             //we have a set of snapshots to work with to create input and output layers for all the contracts in them.
             //for each market, look at each contract
             //for each contract, build input and output arrays
@@ -125,19 +125,32 @@ public class PA_ProblemData {
                         //convert them to arrays and add them.
                         double[] inputLayerArr = new double[inputLayer.size()];
                         for (int j = 0; j < inputLayerArr.length; j++) {
-                            inputLayerArr[i] = inputLayer.get(i);
+                            inputLayerArr[j] = inputLayer.get(j);
                         }
                         inputLayers.add(inputLayerArr);
                         outputLayers.add(outputLayerArr);
-                        System.out.println("~~~~~~~Successfully Added input/output layers to problem arrays. Problem set ready for NN");
+                        //System.out.println("~~~~~~~Successfully Added input/output layers to problem arrays. Problem set ready for NN");
                     }
                     else{
                         //System.out.println("Input layer size (" + inputLayer.size() +") did not match required input layer size (" + inputLayerSize + ")");
-                        System.out.print(".");
+                        //System.out.print(".");
                     }
                 }
             }
         }
+        System.out.println("Successfully completed PA_ProblemData constructor:");
+        System.out.println("Num of Input sets: " + inputLayers.size());
+        System.out.println("Num of Output sets:" + outputLayers.size() + " (should match)");
+        System.out.println("Input Layer Size: " + getInputLayerSize());
+        System.out.println("Output Layer Size: " + outputLayerSize);
+        System.out.println("_______________________________________________________________");
+        System.out.println("Sample set:");
+        System.out.println("Input Layer: ");
+        System.out.println(Arrays.toString(inputLayers.get(0)));
+        System.out.println("Output Layer:");
+        System.out.println(Arrays.toString(outputLayers.get(0)));
+        System.out.println("_______________________________________________________________");
+
     }
 
     private Contract getContract(Snapshot snapshot, Integer nonUniqueMarketId, int contractId) {
@@ -181,16 +194,24 @@ public class PA_ProblemData {
         return fulldb;
     }
 
-    private List<Snapshot> getProblemSnapshotsFromSnapshot(SnapshotMini snapshotMini, SnapshotService snapshotService) throws SnapshotNotFoundException, NoSnapshotsInDatabaseException {
-        List<Long> timestamps = snapshotService.getTimestamps();
+    private List<Snapshot> getProblemSnapshotsFromSnapshot(SnapshotMini snapshotMini, List<Long> timestamps){
         Collections.reverse(timestamps); //so timestamps are in ascending order, not descending order. Will make it easier to work with going forward
-        Snapshot currentSnapshot = snapshotService.getSnapshot(snapshotMini.getHashID());
+        Snapshot currentSnapshot = getSnapshotById(snapshotMini.getHashID());
         long currentTimestamp = currentSnapshot.getTimestamp();
 
-        return buildSnapshotList(currentTimestamp, timestamps, snapshotService);
+        return buildSnapshotList(currentTimestamp, timestamps);
     }
 
-    private List<Snapshot> buildSnapshotList(long currentTimestamp, List<Long> timestamps, SnapshotService snapshotService) {
+    private Snapshot getSnapshotById(Integer hashID) {
+        for (Snapshot snapshot : snapshots) {
+            if (snapshot.getHashId().equals(hashID)) {
+                return snapshot;
+            }
+        }
+        return null;
+    }
+
+    private List<Snapshot> buildSnapshotList(long currentTimestamp, List<Long> timestamps) {
         //are there enough timestamps AFTER currentTimestamp including it?
         //if we are training the NN using the last 60 mins of data, we would need 30 snapshots for input
         //we want to predict what values will be 30 mins after last snapshots for output, so we want a timestamp = finalTimestamp+30mins, find closest, see if it is within 2 mins of required
@@ -223,7 +244,7 @@ public class PA_ProblemData {
 
         //is the snapshot required for the output layer close enough to what we need for it to work?
         long theoreticalTimestampForOutput = finalTimestampOfInput + (predictionTime * 60000);
-        Snapshot outputSnapshot = snapshotService.getSnapshotClosesToTimestamp(theoreticalTimestampForOutput);
+        Snapshot outputSnapshot = getSnapshotClosesToTimestamp(theoreticalTimestampForOutput, timestamps);
         long actualTimestampForOutput = outputSnapshot.getTimestamp();
         long outputErrorActual = Math.abs(theoreticalTimestampForOutput - actualTimestampForOutput) / 60000;
         if (outputErrorActual > outputErrorMax) {
@@ -242,6 +263,19 @@ public class PA_ProblemData {
         snapshotsToUse.add(outputSnapshot); //add the output layer snapshot
 
         return snapshotsToUse;
+    }
+
+    private Snapshot getSnapshotClosesToTimestamp(long theoreticalTimestampForOutput, List<Long> timestamps) {
+        long snapshotTimestampToUse = -1;
+
+        long difference = Long.MAX_VALUE;
+        for (Long timestamp : timestamps) {
+            if (Math.abs(timestamp - theoreticalTimestampForOutput) < difference) {
+                snapshotTimestampToUse = timestamp;
+                difference = Math.abs(timestamp - theoreticalTimestampForOutput);
+            }
+        }
+        return getSnapshotByTimestamp(snapshotTimestampToUse);
     }
 
     private Snapshot getSnapshotByTimestamp(long timestamp) {
