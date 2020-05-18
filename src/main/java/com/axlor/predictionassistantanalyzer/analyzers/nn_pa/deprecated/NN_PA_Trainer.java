@@ -1,6 +1,7 @@
-package com.axlor.predictionassistantanalyzer.analyzers.nn_pa;
+package com.axlor.predictionassistantanalyzer.analyzers.nn_pa.deprecated;
 
 import com.axlor.predictionassistantanalyzer.analyzers.nn_generic.NN_Generic;
+import com.axlor.predictionassistantanalyzer.analyzers.nn_generic.TrainingDataSet;
 import com.axlor.predictionassistantanalyzer.exception.NoSnapshotsInDatabaseException;
 import com.axlor.predictionassistantanalyzer.exception.SnapshotCountMismatchException;
 import com.axlor.predictionassistantanalyzer.exception.SnapshotNotFoundException;
@@ -12,10 +13,14 @@ import javax.annotation.PostConstruct;
 import java.io.File;
 
 @Component
+@Deprecated
 public class NN_PA_Trainer {
 
     @Autowired
     SnapshotService snapshotService;
+
+    @Autowired
+    NN_PA_Evaluator evaluator;
 
     @PostConstruct
     public void main_NN_method() throws SnapshotCountMismatchException, NoSnapshotsInDatabaseException, SnapshotNotFoundException { //will rename or something later.
@@ -25,13 +30,9 @@ public class NN_PA_Trainer {
         String networkFilename = "NN_PA_obj";
         String problemDataFilename = "PA_ProblemData_obj";
 
-        System.out.println("Building PA training data, this could take a long time...");
-        //PA_ProblemData pa_trainData = new PA_ProblemData(snapshotService); //this could take a while
         PA_ProblemData pa_trainData = get_PA_ProblemData(problemDataFilename);
 
-
-        /*
-        System.out.println("PA_ProblemData object created with " + pa_trainData.getNumOfProblems() + "problem data to train with.");
+        System.out.println("PA_ProblemData object created with " + pa_trainData.getNumOfProblems() + " problem data sets to train with.");
 
         inputLayerSize = pa_trainData.getInputLayerSize();
         outputLayerSize = pa_trainData.getOutputLayerSize();
@@ -40,21 +41,30 @@ public class NN_PA_Trainer {
         System.out.println("Size of training set: " + pa_trainData.getNumOfProblems());
 
         for (int i = 0; i < pa_trainData.getNumOfProblems(); i++) {
-            trainingDataSet.addDataToList(pa_trainData.getInputLayers().get(i),pa_trainData.getOutputLayers().get(i));
+            trainingDataSet.addDataToList(pa_trainData.getInputLayers().get(i), pa_trainData.getOutputLayers().get(i));
         }
 
-        LAYER_SIZES = new int[] {inputLayerSize, 200, 100, 100, outputLayerSize};
-        //NN_Generic neural_network = loadNetwork(LAYER_SIZES, networkFilename);
+        LAYER_SIZES = new int[]{inputLayerSize, 200, 100, 100, outputLayerSize};
+        NN_Generic neural_network = loadNetwork(LAYER_SIZES, networkFilename);
 
-        //neural_network.trainNetworkUsingTrainingDataSet(trainingDataSet,100,100);
-*/
+
+
+        while (true) {
+            neural_network.trainNetworkUsingTrainingDataSet(trainingDataSet, 100, 5);
+            evaluator.predictContract(5883, 17474, pa_trainData, neural_network);
+        }
+
+
+
+
     }
+
 
     private PA_ProblemData get_PA_ProblemData(String problemDataFilename) throws SnapshotCountMismatchException, NoSnapshotsInDatabaseException, SnapshotNotFoundException {
         System.out.println("Attempting to load problem data from file: " + problemDataFilename);
         PA_ProblemData problemData = PA_ProblemData.load_MNIST_data(problemDataFilename);
 
-        if(problemData == null){
+        if (problemData == null) {
             System.out.println("Could not load PA_ProblemData from file to object for whatever reason, creating new problem data object.");
             System.out.println("This could take quite some time...");
 

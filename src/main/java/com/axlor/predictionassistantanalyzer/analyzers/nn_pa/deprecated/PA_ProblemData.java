@@ -1,4 +1,4 @@
-package com.axlor.predictionassistantanalyzer.analyzers.nn_pa;
+package com.axlor.predictionassistantanalyzer.analyzers.nn_pa.deprecated;
 
 import com.axlor.predictionassistantanalyzer.exception.NoSnapshotsInDatabaseException;
 import com.axlor.predictionassistantanalyzer.exception.SnapshotNotFoundException;
@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+@Deprecated
 public class PA_ProblemData implements  Serializable{
 
     private static final long serialVersionUID = 8280092821309185399L; //alt+enter, randomly gen
@@ -103,7 +104,7 @@ public class PA_ProblemData implements  Serializable{
                 List<Contract> contracts = market.getContracts();
                 for (Contract contract : contracts) {
                     List<Double> inputLayer = new ArrayList<>();
-                    double[] outputLayerArr = new double[2];
+                    double[] outputLayerArr = new double[outputLayerSize];
 
                     inputLayer.add((double) market.getId()); //nonUniqueMarketId
                     inputLayer.add((double) contract.getId()); //nonUniqueContractId
@@ -352,4 +353,15 @@ public class PA_ProblemData implements  Serializable{
         return null;
     }
 
+    public int getInputTimeFrame() {
+        return inputTimeFrame;
+    }
+
+    public int getTimeBetweenSnapshots() {
+        return timeBetweenSnapshots;
+    }
+
+    public int getPredictionTime() {
+        return predictionTime;
+    }
 }
