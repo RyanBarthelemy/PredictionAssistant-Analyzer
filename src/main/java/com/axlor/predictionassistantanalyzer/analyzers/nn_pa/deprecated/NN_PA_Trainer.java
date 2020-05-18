@@ -22,7 +22,7 @@ public class NN_PA_Trainer {
     @Autowired
     NN_PA_Evaluator evaluator;
 
-    @PostConstruct
+    //@PostConstruct
     public void main_NN_method() throws SnapshotCountMismatchException, NoSnapshotsInDatabaseException, SnapshotNotFoundException { //will rename or something later.
         int[] LAYER_SIZES;
         int inputLayerSize;
@@ -54,11 +54,7 @@ public class NN_PA_Trainer {
             evaluator.predictContract(5883, 17474, pa_trainData, neural_network);
         }
 
-
-
-
     }
-
 
     private PA_ProblemData get_PA_ProblemData(String problemDataFilename) throws SnapshotCountMismatchException, NoSnapshotsInDatabaseException, SnapshotNotFoundException {
         System.out.println("Attempting to load problem data from file: " + problemDataFilename);
@@ -81,7 +77,6 @@ public class NN_PA_Trainer {
         System.out.println("Successfully loaded problem data from " + problemDataFilename);
         return problemData;
     }
-
 
     private static NN_Generic loadNetwork(int[] LAYER_SIZES, String file) {
         File testFile = new File(file);
