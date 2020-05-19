@@ -112,9 +112,30 @@ public class ContractProblemData implements Serializable {
                 inputLayer[i] = inputLayerList.get(i);
             }
 
-            System.out.println(currentTimestampIndex+ ": Successfully created input layer:" + Arrays.toString(inputLayer));
+            //System.out.println(currentTimestampIndex+ ": Successfully created input layer:" + Arrays.toString(inputLayer));
 
+            //build output layer
+            double[] outputLayer = new double[outputLayerSize];
+            Contract finalContract = getContract(outputMarket, nonUniqueContractId);
+            double buyYesD = finalContract.getBestBuyYesCost();
+            double buyNoD = finalContract.getBestBuyNoCost();
+            //System.out.println("Final Contract: buyYes=[" + buyYesD + "], buyNo=[" + buyNoD + "]");
+            Arrays.fill(outputLayer, 0.0);
 
+            buyYesD = buyYesD*100.0; //convert cost in cents to index in output layer, $0.56 buyYes cost = index 56 in output layer.
+            int buyYesI = (int) buyYesD;
+
+            buyNoD = (buyNoD*100.0) + 100; //add 100 so this is in the second half of the output layer. $0.33 buy no = index 133 in output layer.
+            int buyNoI = (int) buyNoD;
+
+            //so those indices' values from 0 to 1.
+            outputLayer[buyYesI] = 1;
+            outputLayer[buyNoI] = 1;
+
+            //System.out.println("Successfully created output layer:" + Arrays.toString(outputLayer));
+
+            inputLayers.add(inputLayer);
+            outputLayers.add(outputLayer);
 
         }//for loop of each timestamp/market instance
 
