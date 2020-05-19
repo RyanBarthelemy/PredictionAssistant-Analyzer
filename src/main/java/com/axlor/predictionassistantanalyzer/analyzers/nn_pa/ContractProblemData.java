@@ -248,4 +248,16 @@ public class ContractProblemData implements Serializable {
     public List<double[]> getOutputLayers() {
         return outputLayers;
     }
+
+    public int getInputTimeFrame() {
+        return inputTimeFrame;
+    }
+
+    public int getTimeBetweenSnapshots() {
+        return timeBetweenSnapshots;
+    }
+
+    public int getInputErrorMax() {
+        return inputErrorMax;
+    }
 }
