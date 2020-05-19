@@ -5,7 +5,7 @@ import com.axlor.predictionassistantanalyzer.model.Contract;
 import com.axlor.predictionassistantanalyzer.model.Market;
 import com.axlor.predictionassistantanalyzer.service.MarketService;
 
-import java.io.Serializable;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -39,7 +39,13 @@ public class ContractProblemData implements Serializable {
     private List<double[]> inputLayers = new ArrayList<>();  //probably noticeably better performance if these were both 2d arrays
     private List<double[]> outputLayers = new ArrayList<>(); //although we only build the problem data once, so maybe not a big deal, should profile it though
 
+    private int nonUniqueMarketId;
+    private int nonUniqueContractId;
+
     public ContractProblemData(int nonUniqueMarketId, int nonUniqueContractId, MarketService marketService) throws MarketNotFoundException {
+
+        this.nonUniqueMarketId = nonUniqueMarketId;
+        this.nonUniqueContractId = nonUniqueContractId;
 
         inputLayerSize = (inputTimeFrame/timeBetweenSnapshots) * 2;
         outputLayerSize = 200;
@@ -117,6 +123,7 @@ public class ContractProblemData implements Serializable {
             //build output layer
             double[] outputLayer = new double[outputLayerSize];
             Contract finalContract = getContract(outputMarket, nonUniqueContractId);
+            if(finalContract==null){continue;} //should never happen
             double buyYesD = finalContract.getBestBuyYesCost();
             double buyNoD = finalContract.getBestBuyNoCost();
             //System.out.println("Final Contract: buyYes=[" + buyYesD + "], buyNo=[" + buyNoD + "]");
@@ -179,5 +186,66 @@ public class ContractProblemData implements Serializable {
 
         //System.out.println("Successfully found output market to use");
         return marketHistory.get(indexToUse);
+    }
+
+    public static ContractProblemData load_ContractProblem_data(String file){
+        File inputFile = new File(file);
+        try {
+            ObjectInputStream ois = new ObjectInputStream(new FileInputStream(inputFile));
+            ContractProblemData problem_data = (ContractProblemData) ois.readObject();
+            ois.close();
+
+            return problem_data;
+
+        } catch (IOException ex) {
+            System.out.println("Caught an IOException trying to load data from file: " + file);
+            System.out.println("Returning null.");
+        } catch (ClassNotFoundException ex) {
+            System.out.println("Caught ClassNotFoundException trying to caste object to ContractProblemData, returning null.");
+        }
+        return null;
+    }
+
+    public void save_ContractProblem_data(String file){
+        File saveFile = new File(file);
+        try {
+            ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(saveFile));
+            oos.writeObject(this);
+
+            oos.flush();
+            oos.close();
+            System.out.println("Successfully saved ContractProblemData object to " + file);
+
+        } catch (IOException ex) {
+            System.out.println("Caught IOException, did NOT save network to file:" + file);
+        }
+    }
+
+    public int getNonUniqueMarketId() {
+        return nonUniqueMarketId;
+    }
+
+    public int getNonUniqueContractId() {
+        return nonUniqueContractId;
+    }
+
+    public int getNumOfProblems() {
+        return inputLayers.size();
+    }
+
+    public int getInputLayerSize() {
+        return inputLayerSize;
+    }
+
+    public int getOutputLayerSize() {
+        return outputLayerSize;
+    }
+
+    public List<double[]> getInputLayers() {
+        return inputLayers;
+    }
+
+    public List<double[]> getOutputLayers() {
+        return outputLayers;
     }
 }
