@@ -1,7 +1,7 @@
-package com.axlor.predictionassistantanalyzer.analyzers.nn_generic.nn_problems;
+package com.axlor.predictionassistantanalyzer.analyzers.nn_pa.nn_generic.nn_problems;
 
-import com.axlor.predictionassistantanalyzer.analyzers.nn_generic.NN_Generic;
-import com.axlor.predictionassistantanalyzer.analyzers.nn_generic.TrainingDataSet;
+import com.axlor.predictionassistantanalyzer.analyzers.nn_pa.nn_generic.NN_Generic;
+import com.axlor.predictionassistantanalyzer.analyzers.nn_pa.nn_generic.TrainingDataSet;
 
 import java.io.File;
 

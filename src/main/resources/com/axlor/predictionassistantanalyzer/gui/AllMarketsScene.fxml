@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<VBox fx:controller="com.axlor.predictionassistantanalyzer.gui.AllMarketsSceneController" alignment="CENTER" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <MenuBar fx:id="menuBar">
+        <menus>
+          <Menu mnemonicParsing="false" text="File">
+            <items>
+              <MenuItem mnemonicParsing="false" text="Close" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Edit">
+            <items>
+              <MenuItem mnemonicParsing="false" text="Delete" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Help">
+            <items>
+              <MenuItem mnemonicParsing="false" text="About" />
+            </items>
+          </Menu>
+        </menus>
+      </MenuBar>
+      <AnchorPane fx:id="titlePane">
+         <children>
+            <Label fx:id="titleLabel" alignment="CENTER" prefHeight="99.0" prefWidth="1200.0" text="Prediction Assistant Analyzer" textAlignment="CENTER" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <font>
+                  <Font name="System Bold" size="48.0" />
+               </font>
+            </Label>
+         </children>
+      </AnchorPane>
+      <Separator prefHeight="7.0" prefWidth="1200.0" />
+      <AnchorPane>
+         <children>
+            <HBox prefHeight="674.0" prefWidth="1200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <children>
+                  <AnchorPane id="leftPane" fx:id="leftPane" prefHeight="676.0" prefWidth="204.0">
+                     <children>
+                        <Button layoutX="38.0" layoutY="107.0" mnemonicParsing="false" prefHeight="58.0" prefWidth="128.0" text="Button" />
+                        <Button layoutX="38.0" layoutY="220.0" mnemonicParsing="false" prefHeight="58.0" prefWidth="128.0" text="Button" />
+                        <Button layoutX="38.0" layoutY="337.0" mnemonicParsing="false" prefHeight="58.0" prefWidth="128.0" text="Button" />
+                        <Label alignment="CENTER" contentDisplay="CENTER" layoutX="4.0" layoutY="15.0" prefHeight="58.0" prefWidth="197.0" text="All Markets">
+                           <font>
+                              <Font size="32.0" />
+                           </font>
+                        </Label>
+                     </children>
+                  </AnchorPane>
+                  <Separator orientation="VERTICAL" prefHeight="200.0" />
+                  <AnchorPane id="rightPane" fx:id="rightPane" prefHeight="676.0" prefWidth="990.0">
+                     <children>
+                        <Label fx:id="label_query" alignment="CENTER" layoutX="18.0" layoutY="594.0" prefHeight="66.0" prefWidth="78.0" text="Query:" textAlignment="CENTER" AnchorPane.bottomAnchor="14.0">
+                           <font>
+                              <Font name="System Bold" size="22.0" />
+                           </font>
+                        </Label>
+                        <TextField fx:id="textField_query" layoutX="108.0" layoutY="613.0" prefHeight="29.0" prefWidth="222.0" AnchorPane.bottomAnchor="32.0">
+                           <tooltip>
+                              <Tooltip fx:id="query_textfield_tooltip" text="Type comma separated search terms or phrases. Ex: Trump, 2018, Tax Cut. Search will return Markets from most current MarketData that contain a match of ALL the queried terms.">
+                                 <font>
+                                    <Font size="20.0" />
+                                 </font>
+                              </Tooltip>
+                           </tooltip>
+                        </TextField>
+                        <Label fx:id="label_trackedMarkets1" alignment="CENTER" layoutX="14.0" layoutY="14.0" prefHeight="66.0" prefWidth="962.0" text="All Markets - Latest" textAlignment="CENTER" AnchorPane.leftAnchor="14.0" AnchorPane.rightAnchor="14.0">
+                           <font>
+                              <Font name="System Bold" size="36.0" />
+                           </font>
+                        </Label>
+                        <TableView fx:id="allMarketsTable" layoutX="18.0" layoutY="80.0" prefHeight="510.0" prefWidth="962.0" AnchorPane.bottomAnchor="84.0" AnchorPane.leftAnchor="18.0" AnchorPane.rightAnchor="10.0" />
+                     </children>
+                  </AnchorPane>
+               </children>
+            </HBox>
+         </children>
+      </AnchorPane>
+   </children>
+</VBox>

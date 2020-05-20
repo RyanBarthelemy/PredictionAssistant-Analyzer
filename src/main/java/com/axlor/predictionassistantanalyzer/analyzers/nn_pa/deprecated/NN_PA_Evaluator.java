@@ -1,6 +1,6 @@
 package com.axlor.predictionassistantanalyzer.analyzers.nn_pa.deprecated;
 
-import com.axlor.predictionassistantanalyzer.analyzers.nn_generic.NN_Generic;
+import com.axlor.predictionassistantanalyzer.analyzers.nn_pa.nn_generic.NN_Generic;
 import com.axlor.predictionassistantanalyzer.model.Snapshot;
 import com.axlor.predictionassistantanalyzer.service.SnapshotService;
 import org.springframework.beans.factory.annotation.Autowired;

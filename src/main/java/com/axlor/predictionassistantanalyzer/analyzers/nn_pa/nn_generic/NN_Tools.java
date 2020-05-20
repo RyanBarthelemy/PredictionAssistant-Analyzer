@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.axlor.predictionassistantanalyzer.analyzers.nn_generic;
+package com.axlor.predictionassistantanalyzer.analyzers.nn_pa.nn_generic;
 
 import java.util.Random;
 

@@ -1,5 +1,5 @@
 //This class represents a set of input measurements and output target values that can be used to train a NN
-package com.axlor.predictionassistantanalyzer.analyzers.nn_generic;
+package com.axlor.predictionassistantanalyzer.analyzers.nn_pa.nn_generic;
 
 import java.util.ArrayList;
 

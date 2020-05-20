@@ -1,14 +1,6 @@
-package com.axlor.predictionassistantanalyzer.analyzers.nn_generic.nn_problems;
+package com.axlor.predictionassistantanalyzer.analyzers.nn_pa.nn_generic.nn_problems;
 
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.*;
 
 //This class is going to be used to read in the MNIST data and store that data in a way that can be easily accessed by other classes/programs/whatever
 //The dataset for the MNIST problem is stored in a somewhat unusual but very efficient way so we need to do some magic to get it in a state we desire.

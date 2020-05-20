@@ -1,7 +1,7 @@
 package com.axlor.predictionassistantanalyzer.analyzers.nn_pa.deprecated;
 
-import com.axlor.predictionassistantanalyzer.analyzers.nn_generic.NN_Generic;
-import com.axlor.predictionassistantanalyzer.analyzers.nn_generic.TrainingDataSet;
+import com.axlor.predictionassistantanalyzer.analyzers.nn_pa.nn_generic.NN_Generic;
+import com.axlor.predictionassistantanalyzer.analyzers.nn_pa.nn_generic.TrainingDataSet;
 import com.axlor.predictionassistantanalyzer.exception.NoSnapshotsInDatabaseException;
 import com.axlor.predictionassistantanalyzer.exception.SnapshotCountMismatchException;
 import com.axlor.predictionassistantanalyzer.exception.SnapshotNotFoundException;
@@ -9,7 +9,6 @@ import com.axlor.predictionassistantanalyzer.service.SnapshotService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.io.File;
 
 @Component

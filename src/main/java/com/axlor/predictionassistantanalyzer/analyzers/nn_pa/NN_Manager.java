@@ -1,7 +1,7 @@
 package com.axlor.predictionassistantanalyzer.analyzers.nn_pa;
 
-import com.axlor.predictionassistantanalyzer.analyzers.nn_generic.NN_Generic;
-import com.axlor.predictionassistantanalyzer.analyzers.nn_generic.TrainingDataSet;
+import com.axlor.predictionassistantanalyzer.analyzers.nn_pa.nn_generic.NN_Generic;
+import com.axlor.predictionassistantanalyzer.analyzers.nn_pa.nn_generic.TrainingDataSet;
 import com.axlor.predictionassistantanalyzer.exception.MarketNotFoundException;
 import com.axlor.predictionassistantanalyzer.exception.NoSnapshotsInDatabaseException;
 import com.axlor.predictionassistantanalyzer.model.Contract;
@@ -10,7 +10,6 @@ import com.axlor.predictionassistantanalyzer.service.MarketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,7 +24,7 @@ public class NN_Manager {
 
     //http://localhost:8080/markets/6704/contracts/22689 for testing, hopefully pretty volatile
 
-    @PostConstruct
+    //@PostConstruct
     public void NN_create_train_evaluate_forTesting() throws MarketNotFoundException, NoSnapshotsInDatabaseException {
         int[] LAYER_SIZES;
         int inputLayerSize;
