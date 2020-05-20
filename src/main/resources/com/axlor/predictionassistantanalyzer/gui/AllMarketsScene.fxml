@@ -40,9 +40,18 @@
                <children>
                   <AnchorPane id="leftPane" fx:id="leftPane" prefHeight="676.0" prefWidth="204.0">
                      <children>
-                        <Button layoutX="38.0" layoutY="107.0" mnemonicParsing="false" prefHeight="58.0" prefWidth="128.0" text="Button" />
-                        <Button layoutX="38.0" layoutY="220.0" mnemonicParsing="false" prefHeight="58.0" prefWidth="128.0" text="Button" />
-                        <Button layoutX="38.0" layoutY="337.0" mnemonicParsing="false" prefHeight="58.0" prefWidth="128.0" text="Button" />
+                        <Button fx:id="allMarketsButton" layoutX="38.0" layoutY="107.0" mnemonicParsing="false" prefHeight="58.0" prefWidth="128.0" text="All Markets">
+                           <font>
+                              <Font size="16.0" />
+                           </font></Button>
+                        <Button fx:id="trackedMarketsButton" layoutX="38.0" layoutY="220.0" mnemonicParsing="false" onMouseClicked="#trackedMarketsButtonClicked" prefHeight="58.0" prefWidth="128.0" text="Tracked Markets">
+                           <font>
+                              <Font size="14.0" />
+                           </font></Button>
+                        <Button fx:id="moversButton" layoutX="38.0" layoutY="337.0" mnemonicParsing="false" onMouseClicked="#moversButtonClicked" prefHeight="58.0" prefWidth="128.0" text="Movers">
+                           <font>
+                              <Font size="18.0" />
+                           </font></Button>
                         <Label alignment="CENTER" contentDisplay="CENTER" layoutX="4.0" layoutY="15.0" prefHeight="58.0" prefWidth="197.0" text="All Markets">
                            <font>
                               <Font size="32.0" />
@@ -58,9 +67,9 @@
                               <Font name="System Bold" size="22.0" />
                            </font>
                         </Label>
-                        <TextField fx:id="textField_query" layoutX="108.0" layoutY="613.0" prefHeight="29.0" prefWidth="222.0" AnchorPane.bottomAnchor="32.0">
+                        <TextField fx:id="query_textField" layoutX="108.0" layoutY="613.0" onKeyReleased="#query_TextFieldChanged" prefHeight="29.0" prefWidth="222.0" AnchorPane.bottomAnchor="32.0">
                            <tooltip>
-                              <Tooltip fx:id="query_textfield_tooltip" text="Type comma separated search terms or phrases. Ex: Trump, 2018, Tax Cut. Search will return Markets from most current MarketData that contain a match of ALL the queried terms.">
+                              <Tooltip fx:id="query_textfield_tooltip" text="Type comma separated search terms or phrases. Ex: Trump, 2018, Tax Cut. Search will return Markets from most recent data that contains any of the terms.">
                                  <font>
                                     <Font size="20.0" />
                                  </font>
@@ -73,6 +82,11 @@
                            </font>
                         </Label>
                         <TableView fx:id="allMarketsTable" layoutX="18.0" layoutY="80.0" prefHeight="510.0" prefWidth="962.0" AnchorPane.bottomAnchor="84.0" AnchorPane.leftAnchor="18.0" AnchorPane.rightAnchor="10.0" />
+                        <Button fx:id="trackSelectedMarketButton" layoutX="362.0" layoutY="605.0" mnemonicParsing="false" onMouseClicked="#trackSelectedMarketButton" prefHeight="44.0" prefWidth="197.0" text="Track Selected Market">
+                           <font>
+                              <Font name="System Bold" size="15.0" />
+                           </font>
+                        </Button>
                      </children>
                   </AnchorPane>
                </children>
