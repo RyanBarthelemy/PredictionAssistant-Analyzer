@@ -49,7 +49,6 @@ public class NN_MNIST_Test {
         evaluateNetwork(tds, network, mnistTrain);
         System.out.println("-----------------------------------------------");
 
-        //TODO: save/load
         //TODO: data visualization
     }
 

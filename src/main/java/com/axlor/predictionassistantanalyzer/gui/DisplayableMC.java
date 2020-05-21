@@ -2,9 +2,9 @@ package com.axlor.predictionassistantanalyzer.gui;
 
 public class DisplayableMC {
 
-    private String marketId, contractId, name, buyYes, buyNo, sellYes, sellNo;
+    private String marketId, contractId, name, buyYes, buyNo, sellYes, sellNo, marketUrl;
 
-    public DisplayableMC(String marketId, String contractId, String name, String buyYes, String buyNo, String sellYes, String sellNo) {
+    public DisplayableMC(String marketId, String contractId, String name, String buyYes, String buyNo, String sellYes, String sellNo, String marketUrl) {
         this.marketId = marketId;
         this.contractId = contractId;
         this.name = name;
@@ -12,6 +12,7 @@ public class DisplayableMC {
         this.buyNo = buyNo;
         this.sellYes = sellYes;
         this.sellNo = sellNo;
+        this.marketUrl = marketUrl;
     }
 
     public String getMarketId() {
@@ -40,5 +41,9 @@ public class DisplayableMC {
 
     public String getSellNo() {
         return sellNo;
+    }
+
+    public String getMarketUrl() {
+        return marketUrl;
     }
 }

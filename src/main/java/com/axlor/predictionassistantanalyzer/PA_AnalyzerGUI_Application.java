@@ -20,9 +20,8 @@ public class PA_AnalyzerGUI_Application extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        System.out.println("Got into start method");
         primaryStage.setTitle("Prediction Assistant Analyzer");
-
+        primaryStage.setResizable(false);
         try {
             FxWeaver fxWeaver = applicationContext.getBean(FxWeaver.class);
             Parent parent = fxWeaver.loadView(AllMarketsSceneController.class);
@@ -47,6 +46,7 @@ public class PA_AnalyzerGUI_Application extends Application {
 
         this.applicationContext = new SpringApplicationBuilder()
                 .sources(PredictionAssistantAnalyzerApplication.class)
+                .headless(false) //Need to set this so JavaFX has access to java.awt.Desktop, so Desktop is supported (and other AWT elements). Need this so we can open their default web browser if they want to go to a specific market's webpage.
                 .run(args);
     }
 
@@ -58,5 +58,4 @@ public class PA_AnalyzerGUI_Application extends Application {
         System.exit(111); //Causes the Spring application to close including the downAndSave loop thread that was spawned.
 
     }
-
 }

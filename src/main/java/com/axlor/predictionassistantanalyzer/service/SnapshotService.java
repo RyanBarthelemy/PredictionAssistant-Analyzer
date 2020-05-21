@@ -72,14 +72,6 @@ public class SnapshotService {
             throw new NoSnapshotsInDatabaseException();
         }
 
-        /*
-        For whatever reason snapshotRepository.findById(hashId) is getting wayyy too many Markets in its List<Market>
-        Many many duplicate markets. This code culls the repeats at some cost.
-        TODO: Write a custom @Query in the repository and see if it works
-        Note: ./snapshots/latest works correctly, but /snapshots/{hashId} that retrieves the exact same market will have tons of duplicate Markets in list...
-        I think a custom @Query should solve this issue more elegantly.
-        I don't think it is an ORM issue since other things are working correctly, I think the superclass findById just sucks for this somehow.
-         */
         if (snapshotRepository.findById(hashId).isPresent()) {
             Snapshot snapshot = snapshotRepository.findById(hashId).get();
             //for some reason this isn't working correctly.

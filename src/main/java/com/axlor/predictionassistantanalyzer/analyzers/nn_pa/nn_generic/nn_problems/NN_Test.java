@@ -36,9 +36,7 @@ public class NN_Test {
         for (int i = 0; i < tds.getSizeOfTrainingDataSet(); i++) {
             System.out.println(Arrays.toString(network.calculateActivationsOfAllLayers(tds.getInput(i))));
         }
-         
 
-        //TODO: save/load
         //TODO: data visualization
     }
 
