@@ -71,5 +71,7 @@ public class TrackedMarkets implements Serializable {
         }
     }
 
-
+    public List<Integer> getTrackedMarketsList() {
+        return trackedMarketsList;
+    }
 }

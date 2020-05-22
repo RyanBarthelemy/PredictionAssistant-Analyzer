@@ -1,6 +1,6 @@
 package com.axlor.predictionassistantanalyzer;
 
-import com.axlor.predictionassistantanalyzer.gui.AllMarketsSceneController;
+import com.axlor.predictionassistantanalyzer.gui.sceneController.AllMarketsSceneController;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Parent;
@@ -26,7 +26,7 @@ public class PA_AnalyzerGUI_Application extends Application {
             FxWeaver fxWeaver = applicationContext.getBean(FxWeaver.class);
             Parent parent = fxWeaver.loadView(AllMarketsSceneController.class);
             if(parent == null){
-                System.out.println("parent not created successfully...");
+                System.out.println("parent not created successfully...1");
             }
             Scene scene = new Scene(parent);
             primaryStage.setScene(scene);

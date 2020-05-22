@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<VBox alignment="CENTER" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.axlor.predictionassistantanalyzer.gui.sceneController.TrackedMarketsSceneController">
+   <children>
+      <AnchorPane fx:id="titlePane">
+         <children>
+            <Label fx:id="titleLabel" alignment="CENTER" prefHeight="99.0" prefWidth="1200.0" text="Prediction Assistant Analyzer" textAlignment="CENTER" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <font>
+                  <Font name="System Bold" size="48.0" />
+               </font>
+            </Label>
+         </children>
+      </AnchorPane>
+      <Separator prefHeight="7.0" prefWidth="1200.0" />
+      <AnchorPane>
+         <children>
+            <HBox prefHeight="674.0" prefWidth="1200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <children>
+                  <AnchorPane id="leftPane" fx:id="leftPane" prefHeight="676.0" prefWidth="204.0">
+                     <children>
+                        <Button fx:id="allMarketsButton" layoutX="38.0" layoutY="107.0" mnemonicParsing="false" onMouseClicked="#allMarketsButtonClicked" prefHeight="58.0" prefWidth="128.0" text="All Markets">
+                           <font>
+                              <Font size="16.0" />
+                           </font></Button>
+                        <Button fx:id="trackedMarketsButton" layoutX="38.0" layoutY="220.0" mnemonicParsing="false" onMouseClicked="#trackedMarketsButtonClicked" prefHeight="58.0" prefWidth="128.0" text="Tracked Markets">
+                           <font>
+                              <Font size="14.0" />
+                           </font></Button>
+                        <Button fx:id="moversButton" layoutX="38.0" layoutY="337.0" mnemonicParsing="false" onMouseClicked="#moversButtonClicked" prefHeight="58.0" prefWidth="128.0" text="Movers">
+                           <font>
+                              <Font size="18.0" />
+                           </font></Button>
+                        <Label alignment="CENTER" contentDisplay="CENTER" layoutX="4.0" layoutY="15.0" prefHeight="58.0" prefWidth="197.0" text="Tracked Markets">
+                           <font>
+                              <Font size="25.0" />
+                           </font>
+                        </Label>
+                     </children>
+                  </AnchorPane>
+                  <Separator orientation="VERTICAL" prefHeight="200.0" />
+                  <AnchorPane id="rightPane" fx:id="rightPane" prefHeight="676.0" prefWidth="990.0">
+                     <children>
+                        <Label fx:id="label_trackedMarkets" alignment="CENTER" layoutX="14.0" layoutY="14.0" prefHeight="66.0" prefWidth="962.0" text="Tracked Markets" textAlignment="CENTER" AnchorPane.leftAnchor="14.0" AnchorPane.rightAnchor="14.0">
+                           <font>
+                              <Font name="System Bold" size="36.0" />
+                           </font>
+                        </Label>
+                        <TableView fx:id="trackedMarketsTable" layoutX="18.0" layoutY="80.0" prefHeight="485.0" prefWidth="944.0" AnchorPane.bottomAnchor="109.0" AnchorPane.leftAnchor="18.0" AnchorPane.rightAnchor="28.0" />
+                        <Button fx:id="contractHistoryButton" layoutX="137.0" layoutY="587.0" mnemonicParsing="false" onMouseClicked="#contractHistoryButtonClicked" prefHeight="58.0" prefWidth="190.0" text="Contract History">
+                           <font>
+                              <Font size="22.0" />
+                           </font>
+                        </Button>
+                        <Button id="untrackMarketButton" fx:id="untrackMarketButton" layoutX="648.0" layoutY="587.0" mnemonicParsing="false" onMouseClicked="#untrackMarketButtonClicked" prefHeight="58.0" prefWidth="149.0" text="Untrack Market">
+                           <font>
+                              <Font size="18.0" />
+                           </font>
+                        </Button>
+                     </children>
+                  </AnchorPane>
+               </children>
+            </HBox>
+         </children>
+      </AnchorPane>
+   </children>
+</VBox>

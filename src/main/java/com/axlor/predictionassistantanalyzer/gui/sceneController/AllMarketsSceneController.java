@@ -1,16 +1,21 @@
-package com.axlor.predictionassistantanalyzer.gui;
+package com.axlor.predictionassistantanalyzer.gui.sceneController;
 
 import com.axlor.predictionassistantanalyzer.exception.NoSnapshotsInDatabaseException;
+import com.axlor.predictionassistantanalyzer.gui.DisplayableMC;
+import com.axlor.predictionassistantanalyzer.gui.TrackedMarkets;
 import com.axlor.predictionassistantanalyzer.model.Contract;
 import com.axlor.predictionassistantanalyzer.model.Market;
 import com.axlor.predictionassistantanalyzer.service.SnapshotService;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.control.*;
@@ -19,6 +24,8 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.stage.Stage;
+import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -30,6 +37,9 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
+
+//TODO: Update latestMarketsList and call updateAllMarketsTableView() method every XX mins (2?)
+//can use Spring scheduler for this probably
 @Component
 @FxmlView("AllMarketsScene.fxml")
 public class AllMarketsSceneController {
@@ -39,6 +49,8 @@ public class AllMarketsSceneController {
 
     @Autowired
     TrackedMarkets trackedMarkets;
+
+    private final FxWeaver fxWeaver;
 
     private List<Market> latestMarkets;
 
@@ -50,7 +62,11 @@ public class AllMarketsSceneController {
     private TableColumn sellYesColumn;
     private TableColumn sellNoColumn;
 
-    ContextMenu allMarketsTableContextMenu;
+    private ContextMenu allMarketsTableContextMenu;
+
+    public AllMarketsSceneController(FxWeaver fxWeaver) {
+        this.fxWeaver = fxWeaver;
+    }
 
     @FXML // fx:id="titleLabel"
     private Label titleLabel; // Value injected by FXMLLoader
@@ -76,9 +92,6 @@ public class AllMarketsSceneController {
     @FXML // fx:id="query_textfield_tooltip"
     private Tooltip query_textfield_tooltip; // Value injected by FXMLLoader
 
-    @FXML // fx:id="menuBar"
-    private MenuBar menuBar; // Value injected by FXMLLoader
-
     @FXML // fx:id="titlePane"
     private AnchorPane titlePane; // Value injected by FXMLLoader
 
@@ -96,13 +109,12 @@ public class AllMarketsSceneController {
 
     @FXML
     void initialize() {
-
         setupColumns();
-        setCurrentMarketsList();
-        setupTableContextMenu();
-
-        updateAllMarketsTableView();
-
+        Platform.runLater(() -> {
+            setCurrentMarketsList();
+            setupTableContextMenu();
+            updateAllMarketsTableView();
+        });
     }
 
     private void setupTableContextMenu() {
@@ -122,10 +134,10 @@ public class AllMarketsSceneController {
         menuItem1.setOnAction((ActionEvent event) -> {
             DisplayableMC displayableMC = allMarketsTable.getSelectionModel().getSelectedItem();
 
-            if(displayableMC == null){
+            if (displayableMC == null) {
                 System.out.println("displayableMC object is null, probably shouldn't be...");
             }
-            if(!Desktop.isDesktopSupported()){
+            if (!Desktop.isDesktopSupported()) {
                 System.out.println("Desktop is not supported for some reason... Unix system?");
             }
             if (Desktop.isDesktopSupported() && displayableMC != null && !displayableMC.getMarketUrl().equals("---")) {
@@ -144,14 +156,14 @@ public class AllMarketsSceneController {
         //menuItem2
         menuItem2.setOnAction((ActionEvent event) -> {
             DisplayableMC displayableMC = allMarketsTable.getSelectionModel().getSelectedItem();
-            if(displayableMC != null && !displayableMC.getMarketId().equals("---")){
+            if (displayableMC != null && !displayableMC.getMarketId().equals("---")) {
                 trackedMarkets.track(Integer.parseInt(displayableMC.getMarketId()));
             }
         });
         //menuItem3
         menuItem3.setOnAction((ActionEvent event) -> {
             DisplayableMC displayableMC = allMarketsTable.getSelectionModel().getSelectedItem();
-            if(displayableMC != null && !displayableMC.getMarketId().equals("---")){
+            if (displayableMC != null && !displayableMC.getMarketId().equals("---")) {
                 trackedMarkets.untrack(Integer.parseInt(displayableMC.getMarketId()));
             }
         });
@@ -215,9 +227,7 @@ public class AllMarketsSceneController {
         }//if latest!=null
         else {
             tableData.add(new DisplayableMC("---", "---", "Database error, could not get any Snaphot Market info from DB.", "---", "---", "---", "---", "---"));
-
         }
-
     }
 
     private boolean matchesQuery(Market market) {
@@ -258,12 +268,19 @@ public class AllMarketsSceneController {
 
     private void setupColumns() {
         marketIdColumn = new TableColumn("MID");
+        marketIdColumn.setPrefWidth(40.0);
         contractIdColumn = new TableColumn("CID");
+        contractIdColumn.setPrefWidth(40.0);
         nameColumn = new TableColumn("Name");
+        nameColumn.setPrefWidth(400.0);
         buyYesColumn = new TableColumn("BuyYes");
+        buyYesColumn.setPrefWidth(50.0);
         buyNoColumn = new TableColumn("BuyNo");
+        buyNoColumn.setPrefWidth(50.0);
         sellYesColumn = new TableColumn("SellYes");
+        sellYesColumn.setPrefWidth(50.0);
         sellNoColumn = new TableColumn("SellNo");
+        sellNoColumn.setPrefWidth(50.0);
 
         marketIdColumn.setCellValueFactory(new PropertyValueFactory<>("marketId"));
         contractIdColumn.setCellValueFactory(new PropertyValueFactory<>("contractId"));
@@ -280,13 +297,21 @@ public class AllMarketsSceneController {
     @FXML
     void trackedMarketsButtonClicked(MouseEvent event) {
         System.out.println("trackedMarketsButtonClicked clicked");
-        //change scene
+
+        Stage thisStage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        Parent parent = fxWeaver.loadView(TrackedMarketsSceneController.class);
+        if (parent == null) {
+            System.out.println("parent not created successfully...");
+        }
+        Scene scene = new Scene(parent);
+        thisStage.setScene(scene);
+        thisStage.show();
     }
 
     @FXML
     void moversButtonClicked(MouseEvent event) {
         System.out.println("moversButtonClicked clicked");
-        //change scene
+        //TODO: change scene
     }
 
     @FXML
