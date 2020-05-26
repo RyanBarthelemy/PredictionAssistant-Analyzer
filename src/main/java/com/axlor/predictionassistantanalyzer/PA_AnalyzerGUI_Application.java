@@ -26,7 +26,7 @@ public class PA_AnalyzerGUI_Application extends Application {
             FxWeaver fxWeaver = applicationContext.getBean(FxWeaver.class);
             Parent parent = fxWeaver.loadView(AllMarketsSceneController.class);
             if(parent == null){
-                System.out.println("parent not created successfully...1");
+                System.out.println("parent not created successfully...");
             }
             Scene scene = new Scene(parent);
             primaryStage.setScene(scene);

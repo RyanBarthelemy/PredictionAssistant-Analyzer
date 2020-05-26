@@ -47,6 +47,9 @@ public class TrackedMarketsSceneController {
     @Autowired
     MarketService marketService;
 
+    @Autowired
+    ContractHistorySceneController contractHistorySceneController;
+
     private final FxWeaver fxWeaver;
 
     private List<Market> trackedMarkets;
@@ -115,10 +118,6 @@ public class TrackedMarketsSceneController {
     }
 
     private void setupTableContextMenu() {
-        //todo: setup the context menu in tracked markets scene
-        //still need to think about what I want in this menu. Probably just the buttons that are available...
-            //open url, untrack(which also reloads list, openContractHistory window, manual refresh?
-
         trackedMarketsTableContextMenu = new ContextMenu();
         MenuItem menuItem1 = new MenuItem("Open URL");
         MenuItem menuItem2 = new MenuItem("Untrack Selected Market");
@@ -175,14 +174,24 @@ public class TrackedMarketsSceneController {
         });
     }
 
-    private void openContractHistoryWindow(String contractId) {
+    private void openContractHistoryWindow(String nonUniqueContractId) {
         try {
-            int cid = Integer.parseInt(contractId);
-            //todo: create a new stage/window with the contract history scene that uses this contract id.
+            int cid = Integer.parseInt(nonUniqueContractId);
+            contractHistorySceneController.setNonUniqueContractId(cid);
 
-
+            Stage contractStage = new Stage();
+            Parent root = fxWeaver.loadView(ContractHistorySceneController.class);
+            if(root==null){
+                System.out.println("root/parent not created successfully...");
+                return;
+            }
+            Scene scene = new Scene(root);
+            contractStage.setScene(scene);
+            contractStage.show();
         }catch(Exception e){
-            System.out.println("Could not parse contractId String to integer in TrackedMarketsSceneController.openContractHistoryWindow method.");
+            System.out.println("Failed to create contractStage loading ContractHistorySceneController scene.");
+            System.out.println(e.getMessage());
+            e.printStackTrace();
         }
     }
 

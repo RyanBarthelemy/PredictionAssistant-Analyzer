@@ -4,14 +4,14 @@ import com.axlor.predictionassistantanalyzer.gui.DisplayableMover;
 import com.axlor.predictionassistantanalyzer.model.Snapshot;
 import com.axlor.predictionassistantanalyzer.service.SnapshotService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@Component
+@Service
 public class MoverService {
 
     @Autowired
@@ -63,11 +63,20 @@ public class MoverService {
                         //create DisplayableMover
                         String sign = "+";
                         if(differenceI < 0){sign="-";}
+
+                        String contractNameToUse;
+                        if(current.getMarkets().get(marketIndex).getContracts().get(contractIndex).getName().equals(current.getMarkets().get(marketIndex).getName())){
+                            contractNameToUse = "Yes/No"; //if contract name = market name, replace contract name with Yes/No
+                        }
+                        else{ //use normal contract name
+                            contractNameToUse = current.getMarkets().get(marketIndex).getContracts().get(contractIndex).getName();
+                        }
+
                         DisplayableMover moverToAdd = new DisplayableMover(
                                 sign,
                                 String.valueOf(Math.abs(differenceI)),
                                 new DecimalFormat("#.##").format(current.getMarkets().get(marketIndex).getContracts().get(contractIndex).getBestBuyYesCost()),
-                                ("BuyYes -- " + current.getMarkets().get(marketIndex).getContracts().get(contractIndex).getName() + " -- " + current.getMarkets().get(marketIndex).getName()),
+                                ("BuyYes -- " + contractNameToUse + " -- " + current.getMarkets().get(marketIndex).getName()),
                                 String.valueOf(current.getMarkets().get(marketIndex).getContracts().get(contractIndex).getId()),
                                 String.valueOf(current.getMarkets().get(marketIndex).getId()),
                                 current.getMarkets().get(marketIndex).getUrl()
@@ -76,7 +85,7 @@ public class MoverService {
                         moversList.add(moverToAdd);
                     }
                 }catch(Exception e){
-                    System.out.println(e.getMessage());
+                    //System.out.println(e.getMessage());
                 }
 
             }//for each contract
