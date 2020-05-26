@@ -10,15 +10,17 @@ import com.axlor.predictionassistantanalyzer.service.MarketService;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
@@ -27,6 +29,11 @@ import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.awt.*;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,6 +58,8 @@ public class TrackedMarketsSceneController {
     private TableColumn buyNoColumn;
     private TableColumn sellYesColumn;
     private TableColumn sellNoColumn;
+
+    private ContextMenu trackedMarketsTableContextMenu;
 
 
     @FXML // fx:id="titlePane"
@@ -108,7 +117,73 @@ public class TrackedMarketsSceneController {
     private void setupTableContextMenu() {
         //todo: setup the context menu in tracked markets scene
         //still need to think about what I want in this menu. Probably just the buttons that are available...
-            //untrack(which also reloads list, openContractHistory window, manual refresh?
+            //open url, untrack(which also reloads list, openContractHistory window, manual refresh?
+
+        trackedMarketsTableContextMenu = new ContextMenu();
+        MenuItem menuItem1 = new MenuItem("Open URL");
+        MenuItem menuItem2 = new MenuItem("Untrack Selected Market");
+        MenuItem menuItem3 = new MenuItem("Open Contract History");
+        MenuItem menuItem4 = new MenuItem("Refresh");
+
+        trackedMarketsTableContextMenu.getItems().addAll(menuItem1, menuItem2, menuItem3, menuItem4);
+
+        //--menuItem1-------------------------------------------------------------------------------------------------\\
+        trackedMarketsTable.addEventHandler(MouseEvent.MOUSE_CLICKED, (MouseEvent event) -> {
+            if (event.getButton() == MouseButton.SECONDARY) { //right click
+                trackedMarketsTableContextMenu.show(trackedMarketsTable, event.getScreenX(), event.getScreenY());
+            }
+        });
+        menuItem1.setOnAction((ActionEvent event) -> {
+            DisplayableMC displayableMC = trackedMarketsTable.getSelectionModel().getSelectedItem();
+
+            if (displayableMC == null) {
+                System.out.println("displayableMC object is null, probably shouldn't be...");
+            }
+            if (!Desktop.isDesktopSupported()) {
+                System.out.println("Desktop is not supported for some reason... Unix system?");
+            }
+            if (Desktop.isDesktopSupported() && displayableMC != null && !displayableMC.getMarketUrl().equals("---")) {
+                try {
+                    try {
+                        Desktop.getDesktop().browse(new URI(displayableMC.getMarketUrl()));
+                    } catch (URISyntaxException ex) {
+                        System.out.println("Failed to open market URL.");
+                    }
+                } catch (IOException ex) {
+                    System.out.println("Failed to open market URL.");
+                }
+            }
+        });
+        //--------------------------------------------------------------------------------------------------------\\
+        //menuItem2 -- untrack
+        menuItem2.setOnAction((ActionEvent event) -> {
+            untrackSelectedMarket();
+        });
+        //menuItem3 -- open contract history window
+        menuItem3.setOnAction((ActionEvent event) -> {
+            DisplayableMC displayableMC = trackedMarketsTable.getSelectionModel().getSelectedItem();
+            if(displayableMC!=null && !displayableMC.getContractId().equals("---")){
+                openContractHistoryWindow(displayableMC.getContractId());
+            }
+        });
+        //menuItem4 -- refresh
+        menuItem4.setOnAction((ActionEvent event) -> {
+            try {
+                setTrackedMarketsList();
+                updateTrackedMarketsTableView();
+            } catch (NoSnapshotsInDatabaseException | MarketNotFoundException ignored) {}
+        });
+    }
+
+    private void openContractHistoryWindow(String contractId) {
+        try {
+            int cid = Integer.parseInt(contractId);
+            //todo: create a new stage/window with the contract history scene that uses this contract id.
+
+
+        }catch(Exception e){
+            System.out.println("Could not parse contractId String to integer in TrackedMarketsSceneController.openContractHistoryWindow method.");
+        }
     }
 
     private void updateTrackedMarketsTableView() {
@@ -143,10 +218,10 @@ public class TrackedMarketsSceneController {
                                 String.valueOf(market.getId()),
                                 String.valueOf(contract.getId()),
                                 "         " + nameToUse,
-                                String.valueOf(contract.getBestBuyYesCost()),
-                                String.valueOf(contract.getBestBuyNoCost()),
-                                String.valueOf(contract.getBestSellYesCost()),
-                                String.valueOf(contract.getBestSellNoCost()),
+                                new DecimalFormat("#.##").format(contract.getBestBuyYesCost()),
+                                new DecimalFormat("#.##").format(contract.getBestBuyNoCost()),
+                                new DecimalFormat("#.##").format(contract.getBestSellYesCost()),
+                                new DecimalFormat("#.##").format(contract.getBestSellNoCost()),
                                 market.getUrl()
                         ));
                     }//for each contract
@@ -158,6 +233,7 @@ public class TrackedMarketsSceneController {
         }//if latest!=null
         else {
             tableData.add(new DisplayableMC("---", "---", "Database error, could not get any Snaphot Market info from DB.", "---", "---", "---", "---", "---"));
+            trackedMarketsTable.setItems(tableData);
         }
     }
 
@@ -220,19 +296,39 @@ public class TrackedMarketsSceneController {
 
     @FXML
     void moversButtonClicked(MouseEvent event) {
-        System.out.println("Movers button clicked.");
-        //todo: change scene
+        Stage thisStage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        Parent parent = fxWeaver.loadView(MoversSceneController.class);
+        if (parent == null) {
+            System.out.println("parent not created successfully...");
+        }
+        Scene scene = new Scene(parent);
+        thisStage.setScene(scene);
+        thisStage.show();
     }
 
     @FXML
     void contractHistoryButtonClicked(MouseEvent event) {
         System.out.println("Contract History button clicked");
-        //todo: open new stage with this contract's history tableview displayed and some options for visual charts/whatever
+        DisplayableMC displayableMC = trackedMarketsTable.getSelectionModel().getSelectedItem();
+        if(displayableMC!=null && !displayableMC.getContractId().equals("---")){
+            openContractHistoryWindow(displayableMC.getContractId());
+        }
     }
 
     @FXML
     void untrackMarketButtonClicked(MouseEvent event) {
         System.out.println("Untrack Market button clicked");
-        //todo: get the id of the selected row's market and untrack it.
+        untrackSelectedMarket();
+    }
+
+    private void untrackSelectedMarket() {
+        DisplayableMC displayableMC = trackedMarketsTable.getSelectionModel().getSelectedItem();
+        if (displayableMC != null && !displayableMC.getMarketId().equals("---")) {
+            trackedMarketsIds.untrack(Integer.parseInt(displayableMC.getMarketId()));
+            try {
+                setTrackedMarketsList();
+                updateTrackedMarketsTableView();
+            } catch (NoSnapshotsInDatabaseException | MarketNotFoundException ignored) {}
+        }
     }
 }

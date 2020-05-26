@@ -34,6 +34,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -211,10 +212,10 @@ public class AllMarketsSceneController {
                                 String.valueOf(market.getId()),
                                 String.valueOf(contract.getId()),
                                 "         " + nameToUse,
-                                String.valueOf(contract.getBestBuyYesCost()),
-                                String.valueOf(contract.getBestBuyNoCost()),
-                                String.valueOf(contract.getBestSellYesCost()),
-                                String.valueOf(contract.getBestSellNoCost()),
+                                new DecimalFormat("#.##").format(contract.getBestBuyYesCost()),
+                                new DecimalFormat("#.##").format(contract.getBestBuyNoCost()),
+                                new DecimalFormat("#.##").format(contract.getBestSellYesCost()),
+                                new DecimalFormat("#.##").format(contract.getBestSellNoCost()),
                                 market.getUrl()
                         ));
                     }//for each contract
@@ -296,8 +297,6 @@ public class AllMarketsSceneController {
 
     @FXML
     void trackedMarketsButtonClicked(MouseEvent event) {
-        System.out.println("trackedMarketsButtonClicked clicked");
-
         Stage thisStage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         Parent parent = fxWeaver.loadView(TrackedMarketsSceneController.class);
         if (parent == null) {
@@ -310,8 +309,14 @@ public class AllMarketsSceneController {
 
     @FXML
     void moversButtonClicked(MouseEvent event) {
-        System.out.println("moversButtonClicked clicked");
-        //TODO: change scene
+        Stage thisStage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        Parent parent = fxWeaver.loadView(MoversSceneController.class);
+        if (parent == null) {
+            System.out.println("parent not created successfully...");
+        }
+        Scene scene = new Scene(parent);
+        thisStage.setScene(scene);
+        thisStage.show();
     }
 
     @FXML
