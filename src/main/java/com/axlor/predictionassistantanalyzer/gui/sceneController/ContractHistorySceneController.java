@@ -1,10 +1,12 @@
 package com.axlor.predictionassistantanalyzer.gui.sceneController;
 
+import com.axlor.predictionassistantanalyzer.analyzers.ContractHistoryService;
 import com.axlor.predictionassistantanalyzer.exception.NoSnapshotsInDatabaseException;
+import com.axlor.predictionassistantanalyzer.gui.DisplayableContractInfo;
 import com.axlor.predictionassistantanalyzer.model.Contract;
 import com.axlor.predictionassistantanalyzer.model.Market;
-import com.axlor.predictionassistantanalyzer.service.MarketService;
 import com.axlor.predictionassistantanalyzer.service.SnapshotService;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.chart.CategoryAxis;
@@ -27,13 +29,16 @@ import java.util.List;
 public class ContractHistorySceneController {
 
     @Autowired
-    MarketService marketService;
-
-    @Autowired
     SnapshotService snapshotService;
 
+    @Autowired
+    ContractHistoryService contractHistoryService;
+
+    private int timeFrameMins = 1440; //24hrs, changeable
     private int nonUniqueContractId;
+    private int nonUniqueMarketId;
     private final FxWeaver fxWeaver;
+    private List<DisplayableContractInfo> contractHistoryList;
 
     @FXML // fx:id="sma10_checkbox"
     private CheckBox sma10_checkbox; // Value injected by FXMLLoader
@@ -73,9 +78,14 @@ public class ContractHistorySceneController {
         boolean buildable = setTitle();
 
         if(buildable){
-            //todo: this stuff
-        //buildContractHistoryChart();
-        //buildContractHistoryTableView();
+            contractInfoLabel.setText("Downloading Data and Building UI, this may take a moment...");
+            Platform.runLater(()->{
+                contractHistoryList = contractHistoryService.getContractHistoryLast_XX_mins(nonUniqueMarketId, nonUniqueContractId, timeFrameMins);
+                System.out.println("Contract History List set.");
+                setTitle();
+                //buildContractHistoryChart();
+                //buildContractHistoryTableView();
+            });
         }
         else{
             contractInfoLabel.setText("Could not build charts and table using Contract[" + nonUniqueContractId + "]. Contract may not exist in latest market data.");
@@ -95,6 +105,7 @@ public class ContractHistorySceneController {
             else {
                 contractInfoLabel.setText("BuyYes: Contract[" + nonUniqueContractId + "] -- " + contractName + " -- " + market.getName());
             }
+            nonUniqueMarketId = market.getId();
             return true;
         } catch (NoSnapshotsInDatabaseException e) {return false;}
     }

@@ -16,8 +16,10 @@ public class TrackedMarkets implements Serializable {
 
     public boolean track(int marketId){
 
-        for (int i = 0; i < trackedMarketsList.size(); i++) {
-            if(trackedMarketsList.get(i)==marketId){return false;} //already tracking this market.
+        for (Integer integer : trackedMarketsList) {
+            if (integer == marketId) {
+                return false;
+            } //already tracking this market.
         }
         trackedMarketsList.add(marketId);
         return save();

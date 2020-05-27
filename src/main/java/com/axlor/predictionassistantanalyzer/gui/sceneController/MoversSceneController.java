@@ -220,9 +220,8 @@ public class MoversSceneController {
             //displayableMoverList is null
             tableData.add(new DisplayableMover(
                     "", "--", "--",
-                    "Error: Something went wrong, displayableMoverList is null. You should never see me probably...",
+                    "No Movers found for given parameters.",
                     "--", "--", "--"));
-
             moversTableView.setItems(tableData);
         }
     }

@@ -50,7 +50,7 @@ public class MarketService {
             MarketMini marketMini = new MarketMini(
                     current.getMarkets().get(i).getName(),
                     current.getMarkets().get(i).getId(),
-                    "/api/markets/" + current.getMarkets().get(i).getId(),
+                    "/api/markets/" + current.getMarkets().get(i).getId(), //should extract "/api/" to config
                     contractMinis
             );
             marketMinis.add(marketMini);
