@@ -53,7 +53,16 @@ public class ContractHistoryService {
                 else{ //we can set the change because the next index exists.
                     dci.setChange(calculateChange(dci.getBuyYes(), contractHistory.get(i+1).getBuyYes()));
                     dci.setMinsFromCurrent(minuteDifference(mostRecentTimestamp, dci.getTimestamp()));
-                    contractHistoryLimited.add(dci);
+
+                    //---------PredictIt bug fix workaround------------------\\
+                    //If something is rising rapidly in price, there may be no one left selling shares at the wtb price.
+                    //If no shares are available to be bought at the current price, PI lists the price as 0.0
+                    //This messes with price tracking, so I remove it. Eventually I will scrape shares available...
+                    //...but that is not available through the api and is against ToS, so maybe I won't/
+                    if(Double.parseDouble(dci.getBuyYes()) != 0){
+                        contractHistoryLimited.add(dci);
+                    }//--------------------------------------------------------\\
+
                     if(Math.abs(Integer.parseInt(minuteDifference(mostRecentTimestamp, dci.getTimestamp()))) > (timeFrameMins)){
                         //System.out.println("Hit the time mark");
                         return contractHistoryLimited;

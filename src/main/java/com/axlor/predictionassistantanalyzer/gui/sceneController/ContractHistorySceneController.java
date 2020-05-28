@@ -9,9 +9,9 @@ import com.axlor.predictionassistantanalyzer.service.SnapshotService;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
@@ -34,7 +34,7 @@ public class ContractHistorySceneController {
     @Autowired
     ContractHistoryService contractHistoryService;
 
-    private int timeFrameMins = 1440; //24hrs, changeable
+    private int timeFrameMins = 240; //changeable
     private int nonUniqueContractId;
     private int nonUniqueMarketId;
     private final FxWeaver fxWeaver;
@@ -53,10 +53,10 @@ public class ContractHistorySceneController {
     private NumberAxis chart_yAxis; // Value injected by FXMLLoader
 
     @FXML // fx:id="chart_xAxis"
-    private CategoryAxis chart_xAxis; // Value injected by FXMLLoader
+    private NumberAxis chart_xAxis; // Value injected by FXMLLoader
 
     @FXML // fx:id="contractHistoryChart"
-    private LineChart<?, ?> contractHistoryChart; // Value injected by FXMLLoader
+    private LineChart<Number, Number> contractHistoryChart; // Value injected by FXMLLoader
 
     @FXML // fx:id="openUrlButton"
     private Button openUrlButton; // Value injected by FXMLLoader
@@ -66,6 +66,10 @@ public class ContractHistorySceneController {
 
     public ContractHistorySceneController(FxWeaver fxWeaver) {
         this.fxWeaver = fxWeaver;
+        chart_xAxis = new NumberAxis();
+        chart_yAxis = new NumberAxis();
+
+        contractHistoryChart = new LineChart<>(chart_xAxis, chart_yAxis);
     }
 
     public void setNonUniqueContractId(int nonUniqueContractId) {
@@ -83,13 +87,38 @@ public class ContractHistorySceneController {
                 contractHistoryList = contractHistoryService.getContractHistoryLast_XX_mins(nonUniqueMarketId, nonUniqueContractId, timeFrameMins);
                 System.out.println("Contract History List set.");
                 setTitle();
-                //buildContractHistoryChart();
+                buildContractHistoryChart();
                 //buildContractHistoryTableView();
             });
         }
         else{
             contractInfoLabel.setText("Could not build charts and table using Contract[" + nonUniqueContractId + "]. Contract may not exist in latest market data.");
         }
+    }
+
+    private void buildContractHistoryChart() {
+        XYChart.Series series = new XYChart.Series();
+        series.setName("Contract History");
+
+        /*
+        for (DisplayableContractInfo dci: contractHistoryList){
+            series.getData().add(new XYChart.Data(Integer.parseInt(dci.getMinsFromCurrent()), Double.parseDouble(dci.getBuyYes())));
+            //System.out.println("added point: (" + Integer.parseInt(dci.getMinsFromCurrent()) + ", " + Double.parseDouble(dci.getBuyYes()) + ")");
+        }
+         */
+
+        for (int i = 0; i < contractHistoryList.size(); i++) {
+            if(i==0 || !contractHistoryList.get(i).getBuyYes().equals(contractHistoryList.get(i - 1).getBuyYes())){
+                DisplayableContractInfo dci = contractHistoryList.get(i);
+                series.getData().add(new XYChart.Data(Integer.parseInt(dci.getMinsFromCurrent()), Double.parseDouble(dci.getBuyYes())));
+            }
+        }
+
+        contractHistoryChart.getData().add(series);
+        chart_yAxis.setAutoRanging(false);
+        chart_yAxis.setLowerBound(0.0);
+        chart_yAxis.setUpperBound(1.0);
+        chart_yAxis.setTickUnit(0.05);
     }
 
     private boolean setTitle() {
