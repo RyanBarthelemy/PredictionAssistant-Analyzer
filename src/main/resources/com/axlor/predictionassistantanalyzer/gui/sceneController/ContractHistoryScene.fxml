@@ -4,7 +4,7 @@
 <?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.*?>
 <VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="850.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.axlor.predictionassistantanalyzer.gui.sceneController.ContractHistorySceneController">
    <children>
       <AnchorPane prefHeight="54.0" prefWidth="1200.0">
@@ -41,7 +41,7 @@
                                     </LineChart>
                                     <AnchorPane prefHeight="37.0" prefWidth="1200.0">
                                        <children>
-                                          <CheckBox fx:id="sma10_checkbox" layoutX="892.0" mnemonicParsing="false" onAction="#sma10_checkboxClicked" text="SMA(10 min)" AnchorPane.bottomAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                          <CheckBox fx:id="sma10_checkbox" layoutX="892.0" layoutY="-8.0" mnemonicParsing="false" onAction="#sma10_checkboxClicked" text="SMA(10 min)" AnchorPane.bottomAnchor="8.0" AnchorPane.topAnchor="-8.0">
                                              <font>
                                                 <Font size="14.0" />
                                              </font>
@@ -49,11 +49,23 @@
                                                 <Tooltip text="Simple Moving Average using last 10 minutes of prices." />
                                              </tooltip>
                                           </CheckBox>
+                                          <TextField fx:id="timeframeTextField" layoutX="140.0" layoutY="2.0" prefHeight="25.0" prefWidth="76.0" AnchorPane.bottomAnchor="10.0" AnchorPane.topAnchor="2.0" />
+                                          <Label layoutX="222.0" layoutY="5.0" prefHeight="28.0" prefWidth="38.0" text="mins" />
+                                          <Label layoutX="55.0" layoutY="6.0" text="Timeframe" AnchorPane.bottomAnchor="14.0" AnchorPane.topAnchor="6.0">
+                                             <font>
+                                                <Font size="17.0" />
+                                             </font>
+                                          </Label>
+                                          <Button fx:id="refreshButton" layoutX="260.0" layoutY="3.0" mnemonicParsing="false" onMouseClicked="#refreshButtonClicked" prefHeight="34.0" prefWidth="99.0" text="Refresh">
+                                             <font>
+                                                <Font size="15.0" />
+                                             </font>
+                                          </Button>
                                        </children>
                                     </AnchorPane>
                                     <AnchorPane prefHeight="22.0" prefWidth="1200.0">
                                        <children>
-                                          <CheckBox fx:id="sma60_checkbox" layoutX="892.0" mnemonicParsing="false" onAction="#sma60_checkboxClicked" text="SMA(60 min)" AnchorPane.bottomAnchor="2.0" AnchorPane.topAnchor="0.0">
+                                          <CheckBox fx:id="sma60_checkbox" layoutX="892.0" layoutY="-14.0" mnemonicParsing="false" onAction="#sma60_checkboxClicked" text="SMA(60 min)" AnchorPane.bottomAnchor="16.0" AnchorPane.topAnchor="-14.0">
                                              <font>
                                                 <Font size="14.0" />
                                              </font>
@@ -61,6 +73,7 @@
                                                 <Tooltip text="Simple Moving Average using last 60 minutes of prices." />
                                              </tooltip>
                                           </CheckBox>
+                                          <Label fx:id="currentTimeframeLabel" layoutX="135.0" layoutY="-2.0" prefHeight="17.0" prefWidth="109.0" text="current=#####" />
                                        </children>
                                     </AnchorPane>
                                  </children>

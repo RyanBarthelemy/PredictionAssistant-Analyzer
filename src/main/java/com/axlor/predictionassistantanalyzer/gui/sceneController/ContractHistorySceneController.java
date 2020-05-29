@@ -21,7 +21,10 @@ import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.awt.event.MouseEvent;
+import java.awt.*;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 @Component
@@ -34,11 +37,21 @@ public class ContractHistorySceneController {
     @Autowired
     ContractHistoryService contractHistoryService;
 
-    private int timeFrameMins = 240; //changeable
+    private int timeFrameMins = 120; //changeable
     private int nonUniqueContractId;
     private int nonUniqueMarketId;
+    private String url = "null";
     private final FxWeaver fxWeaver;
     private List<DisplayableContractInfo> contractHistoryList;
+
+    @FXML
+    private Label currentTimeframeLabel;
+
+    @FXML
+    private javafx.scene.control.TextField timeframeTextField;
+
+    @FXML
+    private Button refreshButton;
 
     @FXML // fx:id="sma10_checkbox"
     private CheckBox sma10_checkbox; // Value injected by FXMLLoader
@@ -84,7 +97,7 @@ public class ContractHistorySceneController {
         if(buildable){
             contractInfoLabel.setText("Downloading Data and Building UI, this may take a moment...");
             Platform.runLater(()->{
-                contractHistoryList = contractHistoryService.getContractHistoryLast_XX_mins(nonUniqueMarketId, nonUniqueContractId, timeFrameMins);
+                contractHistoryList = contractHistoryService.getContractHistory(nonUniqueMarketId, nonUniqueContractId);
                 System.out.println("Contract History List set.");
                 setTitle();
                 buildContractHistoryChart();
@@ -110,11 +123,17 @@ public class ContractHistorySceneController {
         for (int i = 0; i < contractHistoryList.size(); i++) {
             if(i==0 || !contractHistoryList.get(i).getBuyYes().equals(contractHistoryList.get(i - 1).getBuyYes())){
                 DisplayableContractInfo dci = contractHistoryList.get(i);
+                if(Math.abs(Integer.parseInt(dci.getMinsFromCurrent())) > timeFrameMins){
+                    System.out.println("reached break at min from current = " + dci.getMinsFromCurrent());
+                    series.getData().add(new XYChart.Data(Integer.parseInt(dci.getMinsFromCurrent()), Double.parseDouble(dci.getBuyYes())));
+                    break;
+                }
                 series.getData().add(new XYChart.Data(Integer.parseInt(dci.getMinsFromCurrent()), Double.parseDouble(dci.getBuyYes())));
             }
         }
-
+        contractHistoryChart.getData().clear();
         contractHistoryChart.getData().add(series);
+
         chart_yAxis.setAutoRanging(false);
         chart_yAxis.setLowerBound(0.0);
         chart_yAxis.setUpperBound(1.0);
@@ -125,6 +144,7 @@ public class ContractHistorySceneController {
         try {
             Market market = getLatestMarketContainingContract(nonUniqueContractId);
             if(market == null){return false;}
+            url = market.getUrl();
             String contractName = getContractName(market, nonUniqueContractId);
             if(contractName==null){return false;}
 
@@ -166,21 +186,57 @@ public class ContractHistorySceneController {
     }
 
     @FXML
-    void openUrlButtonClicked(MouseEvent event) {
-        System.out.println("Open url button clicked");
-    }
-
-    @FXML
     void sma10_checkboxClicked(ActionEvent event) {
         System.out.println("sma10 checkbox event");
+        updateChart();
     }
 
     @FXML
     void sma60_checkboxClicked(ActionEvent event) {
         System.out.println("sma60 checkbox event");
+        updateChart();
+    }
+
+    private void updateChart() {
+        //todo: set timeframe and labels if possible
+
+
+        buildContractHistoryChart();
+        if(sma10_checkbox.isSelected()){
+            build_sma10Chart();
+        }
+        if(sma60_checkbox.isSelected()){
+            build_sma60Chart();
+        }
+    }
+
+    private void build_sma60Chart() {
+        //todo
+    }
+
+    private void build_sma10Chart() {
+        //todo
     }
 
     public void openUrlButtonClicked(javafx.scene.input.MouseEvent event) {
-        System.out.println("Open url button clicked");
+        if (!Desktop.isDesktopSupported()) {
+            System.out.println("Desktop is not supported for some reason... Unix system?");
+        }
+        if (Desktop.isDesktopSupported() && !url.equals("null")) {
+            try {
+                try {
+                    Desktop.getDesktop().browse(new URI(url));
+                } catch (URISyntaxException ex) {
+                    System.out.println("caught uri syntax exception");
+                }
+            } catch (IOException ex) {
+                System.out.println("Failed to open market URL.");
+            }
+        }
+    }
+
+    public void refreshButtonClicked(javafx.scene.input.MouseEvent event) {
+        System.out.println("Refresh button clicked");
+        updateChart();
     }
 }

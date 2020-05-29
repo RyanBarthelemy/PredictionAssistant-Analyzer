@@ -17,7 +17,7 @@ public class ContractHistoryService {
     @Autowired
     MarketService marketService;
 
-    public List<DisplayableContractInfo> getContractHistoryLast_XX_mins(int nonUniqueMarketId, int nonUniqueContractId, int timeFrameMins) {
+    public List<DisplayableContractInfo> getContractHistory(int nonUniqueMarketId, int nonUniqueContractId) {
 
         List<DisplayableContractInfo> contractHistory = new ArrayList<>();
         try {
@@ -62,18 +62,13 @@ public class ContractHistoryService {
                     if(Double.parseDouble(dci.getBuyYes()) != 0){
                         contractHistoryLimited.add(dci);
                     }//--------------------------------------------------------\\
-
-                    if(Math.abs(Integer.parseInt(minuteDifference(mostRecentTimestamp, dci.getTimestamp()))) > (timeFrameMins)){
-                        //System.out.println("Hit the time mark");
-                        return contractHistoryLimited;
-                    }
                 }
             }
+            return contractHistoryLimited;
         } catch (Exception e) {
             e.getMessage();
             return null;
         }
-        return null;
     }
 
     private String calculateChange(String buyYesThis, String buyYesNext) {
