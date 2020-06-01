@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -26,6 +27,7 @@ public class ContractHistoryService {
             //System.out.println("Start getting history");
             List<Market> marketHistory = marketService.getMarketHistoryByNonUniqueId(nonUniqueMarketId); //most recent to oldest.
             //System.out.println("Finished getting history");
+            Collections.reverse(marketHistory);
 
             long mostRecentTimestamp = getLongTimestampFromString(marketHistory.get(0).getTimeStamp());
             //for each market instance, get DisplayableContractHistory info we need.
@@ -123,7 +125,7 @@ public class ContractHistoryService {
 
     private String minuteDifference(long mostRecentTimestamp, String timestamp) {
         long timestampL = Long.parseLong(timestamp);
-        long milliDiff = mostRecentTimestamp - timestampL; //should be negative
+        long milliDiff = timestampL - mostRecentTimestamp; //should be negative
         long minDiff = milliDiff / 60000;
         return String.valueOf(minDiff);
     }
