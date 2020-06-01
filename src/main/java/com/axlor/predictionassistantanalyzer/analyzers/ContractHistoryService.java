@@ -48,6 +48,7 @@ public class ContractHistoryService {
                     dci.setChange("---");
                     dci.setMinsFromCurrent(minuteDifference(mostRecentTimestamp, dci.getTimestamp()));
                     contractHistoryLimited.add(dci);
+                    setSMA_Values(contractHistoryLimited);
                     return contractHistoryLimited;
                 }
                 else{ //we can set the change because the next index exists.
@@ -64,11 +65,51 @@ public class ContractHistoryService {
                     }//--------------------------------------------------------\\
                 }
             }
+            setSMA_Values(contractHistoryLimited);
             return contractHistoryLimited;
         } catch (Exception e) {
             e.getMessage();
             return null;
         }
+    }
+
+    private void setSMA_Values(List<DisplayableContractInfo> contractHistoryLimited) {
+        //set sma60
+        for (DisplayableContractInfo dci: contractHistoryLimited){
+            List<DisplayableContractInfo> toUse = getDCIsToUse(dci, contractHistoryLimited, 60);
+            double sum = 0.0;
+            for (DisplayableContractInfo dciToUse: toUse){
+                sum = sum + Double.parseDouble(dciToUse.getBuyYes());
+            }
+            double avg = sum / toUse.size();
+            dci.setSma60(String.valueOf(avg));
+        }
+
+        //set sma10
+        for (DisplayableContractInfo dci: contractHistoryLimited){
+            List<DisplayableContractInfo> toUse = getDCIsToUse(dci, contractHistoryLimited, 10);
+            double sum = 0.0;
+            for (DisplayableContractInfo dciToUse: toUse){
+                sum = sum + Double.parseDouble(dciToUse.getBuyYes());
+            }
+            double avg = sum / toUse.size();
+            dci.setSma10(String.valueOf(avg));
+        }
+
+    }
+
+    private List<DisplayableContractInfo> getDCIsToUse(DisplayableContractInfo dci, List<DisplayableContractInfo> contractHistoryLimited, int timeframe) {
+        List<DisplayableContractInfo> toUse = new ArrayList<>();
+        int minCurrent = Math.abs(Integer.parseInt(dci.getMinsFromCurrent()));
+        int minMax = minCurrent + timeframe;
+
+        for (DisplayableContractInfo displayableContractInfo : contractHistoryLimited) {
+            if (Math.abs(Integer.parseInt(displayableContractInfo.getMinsFromCurrent())) >= minCurrent
+                    && Math.abs(Integer.parseInt(displayableContractInfo.getMinsFromCurrent())) <= minMax) {
+                toUse.add(displayableContractInfo);
+            }
+        }
+        return toUse;
     }
 
     private String calculateChange(String buyYesThis, String buyYesNext) {
