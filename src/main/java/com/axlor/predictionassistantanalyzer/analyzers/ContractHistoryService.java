@@ -17,13 +17,15 @@ public class ContractHistoryService {
     @Autowired
     MarketService marketService;
 
+    //todo: fix reversed bug that is also impacting how it measures age of price instance.
+
     public List<DisplayableContractInfo> getContractHistory(int nonUniqueMarketId, int nonUniqueContractId) {
 
         List<DisplayableContractInfo> contractHistory = new ArrayList<>();
         try {
-            System.out.println("Start getting history");
+            //System.out.println("Start getting history");
             List<Market> marketHistory = marketService.getMarketHistoryByNonUniqueId(nonUniqueMarketId); //most recent to oldest.
-            System.out.println("Finished getting history");
+            //System.out.println("Finished getting history");
 
             long mostRecentTimestamp = getLongTimestampFromString(marketHistory.get(0).getTimeStamp());
             //for each market instance, get DisplayableContractHistory info we need.
@@ -68,7 +70,8 @@ public class ContractHistoryService {
             setSMA_Values(contractHistoryLimited);
             return contractHistoryLimited;
         } catch (Exception e) {
-            e.getMessage();
+            //System.out.println(e.getMessage());
+            //e.printStackTrace();
             return null;
         }
     }

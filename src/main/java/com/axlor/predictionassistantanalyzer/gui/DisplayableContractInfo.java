@@ -1,15 +1,25 @@
 package com.axlor.predictionassistantanalyzer.gui;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class DisplayableContractInfo {
 
-    private String nonUniqueContractId, buyYes, change, minsFromCurrent, timestamp, sma10, sma60;
+    private String nonUniqueContractId, buyYes, change, minsFromCurrent, timestamp, sma10, sma60, timestampToDisplay;
 
     public DisplayableContractInfo(String nonUniqueContractId, String buyYes, String timestamp) {
         this.nonUniqueContractId = nonUniqueContractId;
         this.buyYes = buyYes;
         this.timestamp = timestamp;
+        setTimestampToDisplay();
         sma10 = "0";
         sma60 = "0";
+    }
+
+    private void setTimestampToDisplay() {
+        SimpleDateFormat sdf = new SimpleDateFormat("h:mm a EEEE, dd MMMM yyyy");
+        Date date = new Date(Long.parseLong(timestamp));
+        timestampToDisplay = sdf.format(date);
     }
 
     public String getNonUniqueContractId() {
@@ -56,14 +66,21 @@ public class DisplayableContractInfo {
         this.sma60 = sma60;
     }
 
+    public String getTimestampToDisplay() {
+        return timestampToDisplay;
+    }
+
     @Override
     public String toString() {
         return "DisplayableContractInfo{" +
                 "nonUniqueContractId='" + nonUniqueContractId + '\'' +
                 ", buyYes='" + buyYes + '\'' +
                 ", change='" + change + '\'' +
-                ", minsBeforeCurrent='" + minsFromCurrent + '\'' +
+                ", minsFromCurrent='" + minsFromCurrent + '\'' +
                 ", timestamp='" + timestamp + '\'' +
+                ", sma10='" + sma10 + '\'' +
+                ", sma60='" + sma60 + '\'' +
+                ", timestampToDisplay='" + timestampToDisplay + '\'' +
                 '}';
     }
 }

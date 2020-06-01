@@ -3,19 +3,22 @@ package com.axlor.predictionassistantanalyzer.gui.sceneController;
 import com.axlor.predictionassistantanalyzer.analyzers.ContractHistoryService;
 import com.axlor.predictionassistantanalyzer.exception.NoSnapshotsInDatabaseException;
 import com.axlor.predictionassistantanalyzer.gui.DisplayableContractInfo;
+import com.axlor.predictionassistantanalyzer.gui.DisplayableMover;
 import com.axlor.predictionassistantanalyzer.model.Contract;
 import com.axlor.predictionassistantanalyzer.model.Market;
 import com.axlor.predictionassistantanalyzer.service.SnapshotService;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +49,11 @@ public class ContractHistorySceneController {
     private final FxWeaver fxWeaver;
     private List<DisplayableContractInfo> contractHistoryList;
 
+    TableColumn changeColumn;
+    TableColumn currentPriceColumn;
+    TableColumn minFromCurrentColumn;
+    TableColumn timestampColumn;
+
     @FXML
     private Label currentTimeframeLabel;
 
@@ -59,7 +67,7 @@ public class ContractHistorySceneController {
     private CheckBox sma10_checkbox; // Value injected by FXMLLoader
 
     @FXML // fx:id="contractHistoryTableView"
-    private TableView<?> contractHistoryTableView; // Value injected by FXMLLoader
+    private TableView<DisplayableContractInfo> contractHistoryTableView; // Value injected by FXMLLoader
 
     @FXML // fx:id="contractInfoLabel"
     private Label contractInfoLabel; // Value injected by FXMLLoader
@@ -93,7 +101,7 @@ public class ContractHistorySceneController {
 
     @FXML
     void initialize() {
-        System.out.println("got to initialize with contractId: " + nonUniqueContractId);
+        //System.out.println("got to initialize with contractId: " + nonUniqueContractId);
         timeFrameMins = TIMEFRAME_DEFAULT;
         boolean buildable = setTitle();
 
@@ -101,10 +109,15 @@ public class ContractHistorySceneController {
             contractInfoLabel.setText("Downloading Data and Building UI, this may take a moment...");
             Platform.runLater(()->{
                 contractHistoryList = contractHistoryService.getContractHistory(nonUniqueMarketId, nonUniqueContractId);
-                System.out.println("Contract History List set.");
+                //System.out.println("Contract History List set.");
+
+                if(contractHistoryList == null){
+                    return;
+                }
+
                 setTitle();
                 buildContractHistoryChart();
-                //buildContractHistoryTableView();
+                buildContractHistoryTableView();
             });
         }
         else{
@@ -112,16 +125,72 @@ public class ContractHistorySceneController {
         }
     }
 
+    private void buildContractHistoryTableView() {
+        setupColumns();
+
+        ObservableList<DisplayableContractInfo> tableData = FXCollections.observableArrayList();
+        if(contractHistoryList != null && !contractHistoryList.isEmpty()){
+            tableData.addAll(contractHistoryList);
+            contractHistoryTableView.setItems(tableData);
+            setRowBackgroundColors();
+        }
+        else{
+            tableData.add(new DisplayableContractInfo("---", "---","An error occurred, no contract info was found."));
+            contractHistoryTableView.setItems(tableData);
+        }
+    }
+
+    private void setRowBackgroundColors() {
+        changeColumn.setCellFactory(column -> {
+            return new TableCell<DisplayableMover, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty ? "" : getItem().toString());
+                    setGraphic(null);
+                    TableRow<DisplayableMover> currentRow = getTableRow();
+
+                    try{
+                        int change = Integer.parseInt(item);
+                        if (!isEmpty()) {
+                            if (change > 0)
+                                currentRow.setStyle("-fx-background-color:lightgreen");
+                            else if (change < 0)
+                                currentRow.setStyle("-fx-background-color:#ff726f"); //light red sort of
+                            else{
+                                currentRow.setStyle("");//none
+                            }
+                        }
+                    }catch(Exception ignored){}
+
+                }//override updateItem
+            };
+        });
+    }
+
+    private void setupColumns() {
+        changeColumn = new TableColumn("Change");
+        changeColumn.setPrefWidth(100.0);
+        currentPriceColumn = new TableColumn("Current");
+        currentPriceColumn.setPrefWidth(200.0);
+        minFromCurrentColumn = new TableColumn("Age");
+        minFromCurrentColumn.setPrefWidth(100.0);
+        timestampColumn = new TableColumn("Timestamp");
+        timestampColumn.setPrefWidth(400.0);
+
+        changeColumn.setCellValueFactory(new PropertyValueFactory<>("change"));
+        currentPriceColumn.setCellValueFactory(new PropertyValueFactory<>("buyYes"));
+        minFromCurrentColumn.setCellValueFactory(new PropertyValueFactory<>("minsFromCurrent"));
+        timestampColumn.setCellValueFactory(new PropertyValueFactory<>("timestampToDisplay"));
+
+        contractHistoryTableView.getColumns().clear();
+        contractHistoryTableView.getColumns().addAll(changeColumn, currentPriceColumn, minFromCurrentColumn, timestampColumn);
+        contractHistoryTableView.getColumns().forEach((col)-> col.setSortable(false));
+    }
+
     private void buildContractHistoryChart() {
         XYChart.Series series = new XYChart.Series();
         series.setName("Contract History");
-
-        /*
-        for (DisplayableContractInfo dci: contractHistoryList){
-            series.getData().add(new XYChart.Data(Integer.parseInt(dci.getMinsFromCurrent()), Double.parseDouble(dci.getBuyYes())));
-            //System.out.println("added point: (" + Integer.parseInt(dci.getMinsFromCurrent()) + ", " + Double.parseDouble(dci.getBuyYes()) + ")");
-        }
-         */
 
         for (int i = 0; i < contractHistoryList.size(); i++) {
             //if(i==0 || !contractHistoryList.get(i).getBuyYes().equals(contractHistoryList.get(i - 1).getBuyYes())){
@@ -176,9 +245,7 @@ public class ContractHistorySceneController {
     private Market getLatestMarketContainingContract(int nonUniqueContractId) throws NoSnapshotsInDatabaseException {
         List<Market> latestMarkets = snapshotService.getLatestSnapshot().getMarkets();
         for (Market market: latestMarkets){
-            if(marketContainsContract(market, nonUniqueContractId)){
-                return market;
-            }
+            if(marketContainsContract(market, nonUniqueContractId)){ return market;}
         }
         return null;
     }
@@ -192,13 +259,11 @@ public class ContractHistorySceneController {
 
     @FXML
     void sma10_checkboxClicked(ActionEvent event) {
-        System.out.println("sma10 checkbox event");
         updateChart();
     }
 
     @FXML
     void sma60_checkboxClicked(ActionEvent event) {
-        System.out.println("sma60 checkbox event");
         updateChart();
     }
 
@@ -215,16 +280,11 @@ public class ContractHistorySceneController {
         }
 
         buildContractHistoryChart();
-        if(sma10_checkbox.isSelected()){
-            build_sma10Chart();
-        }
-        if(sma60_checkbox.isSelected()){
-            build_sma60Chart();
-        }
+        if(sma10_checkbox.isSelected()){ build_sma10Chart();}
+        if(sma60_checkbox.isSelected()){ build_sma60Chart();}
     }
 
     private void build_sma60Chart() {
-        //todo
         XYChart.Series series = new XYChart.Series();
         series.setName("60min SMA");
 
@@ -232,7 +292,7 @@ public class ContractHistorySceneController {
             //if(i==0 || !contractHistoryList.get(i).getSma60().equals(contractHistoryList.get(i - 1).getSma60())){
                 DisplayableContractInfo dci = contractHistoryList.get(i);
                 if(Math.abs(Integer.parseInt(dci.getMinsFromCurrent())) > timeFrameMins){
-                    System.out.println("sma60: reached break at min from current = " + dci.getMinsFromCurrent());
+                    //System.out.println("sma60: reached break at min from current = " + dci.getMinsFromCurrent());
                     if(Double.parseDouble(dci.getSma60()) == 0.0){continue;}
                     series.getData().add(new XYChart.Data(Integer.parseInt(dci.getMinsFromCurrent()), Double.parseDouble(dci.getSma60())));
                     break;
@@ -246,7 +306,6 @@ public class ContractHistorySceneController {
 
 
     private void build_sma10Chart() {
-        //todo
         XYChart.Series series = new XYChart.Series();
         series.setName("10min SMA");
 
@@ -254,7 +313,7 @@ public class ContractHistorySceneController {
             //if(i==0 || !contractHistoryList.get(i).getSma60().equals(contractHistoryList.get(i - 1).getSma60())){
             DisplayableContractInfo dci = contractHistoryList.get(i);
             if(Math.abs(Integer.parseInt(dci.getMinsFromCurrent())) > timeFrameMins){
-                System.out.println("sma10: reached break at min from current = " + dci.getMinsFromCurrent());
+                //System.out.println("sma10: reached break at min from current = " + dci.getMinsFromCurrent());
                 if(Double.parseDouble(dci.getSma10()) == 0.0){continue;}
                 series.getData().add(new XYChart.Data(Integer.parseInt(dci.getMinsFromCurrent()), Double.parseDouble(dci.getSma10())));
                 break;
@@ -285,7 +344,7 @@ public class ContractHistorySceneController {
     }
 
     public void refreshButtonClicked(javafx.scene.input.MouseEvent event) {
-        System.out.println("Refresh button clicked");
+        //System.out.println("Refresh button clicked");
         updateChart();
     }
 }
