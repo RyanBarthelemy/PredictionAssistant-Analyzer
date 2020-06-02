@@ -303,6 +303,7 @@ public class AllMarketsSceneController {
             System.out.println("parent not created successfully...");
         }
         Scene scene = new Scene(parent);
+        scene.getStylesheets().add("modenaDark.css");
         thisStage.setScene(scene);
         thisStage.show();
     }
@@ -315,6 +316,7 @@ public class AllMarketsSceneController {
             System.out.println("parent not created successfully...");
         }
         Scene scene = new Scene(parent);
+        scene.getStylesheets().add("modenaDark.css");
         thisStage.setScene(scene);
         thisStage.show();
     }

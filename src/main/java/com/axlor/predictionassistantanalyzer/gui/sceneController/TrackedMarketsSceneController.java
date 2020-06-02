@@ -180,12 +180,14 @@ public class TrackedMarketsSceneController {
             contractHistorySceneController.setNonUniqueContractId(cid);
 
             Stage contractStage = new Stage();
+            contractStage.setTitle("Prediction Assistant Analyzer - Contract History");
             Parent root = fxWeaver.loadView(ContractHistorySceneController.class);
             if(root==null){
                 System.out.println("root/parent not created successfully...");
                 return;
             }
             Scene scene = new Scene(root);
+            scene.getStylesheets().add("modenaDark.css");
             contractStage.setScene(scene);
             contractStage.show();
         }catch(Exception e){
@@ -293,6 +295,7 @@ public class TrackedMarketsSceneController {
             System.out.println("parent not created successfully...");
         }
         Scene scene = new Scene(parent);
+        scene.getStylesheets().add("modenaDark.css");
         thisStage.setScene(scene);
         thisStage.show();
     }
@@ -311,6 +314,7 @@ public class TrackedMarketsSceneController {
             System.out.println("parent not created successfully...");
         }
         Scene scene = new Scene(parent);
+        scene.getStylesheets().add("modenaDark.css");
         thisStage.setScene(scene);
         thisStage.show();
     }

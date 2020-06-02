@@ -29,6 +29,7 @@ public class PA_AnalyzerGUI_Application extends Application {
                 System.out.println("parent not created successfully...");
             }
             Scene scene = new Scene(parent);
+            scene.getStylesheets().add("modenaDark.css");
             primaryStage.setScene(scene);
             primaryStage.show();
         }

@@ -178,12 +178,14 @@ public class MoversSceneController {
             contractHistorySceneController.setNonUniqueContractId(cid);
 
             Stage contractStage = new Stage();
+            contractStage.setTitle("Prediction Assistant Analyzer - Contract History");
             Parent root = fxWeaver.loadView(ContractHistorySceneController.class);
             if(root==null){
                 System.out.println("root/parent not created successfully...");
                 return;
             }
             Scene scene = new Scene(root);
+            scene.getStylesheets().add("modenaDark.css");
             contractStage.setScene(scene);
             contractStage.show();
         }catch(Exception e){
@@ -237,9 +239,9 @@ public class MoversSceneController {
                     TableRow<DisplayableMover> currentRow = getTableRow();
                     if (!isEmpty()) {
                         if (item.contains("+"))
-                            currentRow.setStyle("-fx-background-color:lightgreen");
+                            currentRow.setStyle("-fx-background-color:green");
                         else if (item.contains("-"))
-                            currentRow.setStyle("-fx-background-color:#ff726f"); //light red sort of
+                            currentRow.setStyle("-fx-background-color:red"); //light red sort of
                     }
                 }//override updateItem
             };
@@ -312,6 +314,7 @@ public class MoversSceneController {
             System.out.println("parent not created successfully...");
         }
         Scene scene = new Scene(parent);
+        scene.getStylesheets().add("modenaDark.css");
         thisStage.setScene(scene);
         thisStage.show();
     }
@@ -324,6 +327,7 @@ public class MoversSceneController {
             System.out.println("parent not created successfully...");
         }
         Scene scene = new Scene(parent);
+        scene.getStylesheets().add("modenaDark.css");
         thisStage.setScene(scene);
         thisStage.show();
     }
@@ -351,6 +355,5 @@ public class MoversSceneController {
             refreshButton.setText("Refresh");
         });
     }
-
 }
 

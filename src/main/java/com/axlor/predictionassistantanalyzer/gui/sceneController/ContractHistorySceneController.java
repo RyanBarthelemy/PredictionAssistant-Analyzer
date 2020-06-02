@@ -22,6 +22,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
@@ -40,7 +41,9 @@ public class ContractHistorySceneController {
     @Autowired
     ContractHistoryService contractHistoryService;
 
-    private int TIMEFRAME_DEFAULT = 120;
+
+    @Value("${my.contractHistory.timeFrameDefault: 60}")
+    private int TIMEFRAME_DEFAULT;
 
     private int timeFrameMins = TIMEFRAME_DEFAULT; //changeable
     private int nonUniqueContractId;
@@ -49,10 +52,10 @@ public class ContractHistorySceneController {
     private final FxWeaver fxWeaver;
     private List<DisplayableContractInfo> contractHistoryList;
 
-    TableColumn changeColumn;
-    TableColumn currentPriceColumn;
-    TableColumn minFromCurrentColumn;
-    TableColumn timestampColumn;
+    private TableColumn changeColumn;
+    private TableColumn currentPriceColumn;
+    private TableColumn minFromCurrentColumn;
+    private TableColumn timestampColumn;
 
     @FXML
     private Label currentTimeframeLabel;
@@ -102,6 +105,10 @@ public class ContractHistorySceneController {
     @FXML
     void initialize() {
         //System.out.println("got to initialize with contractId: " + nonUniqueContractId);
+        if(TIMEFRAME_DEFAULT < 10){
+            TIMEFRAME_DEFAULT = 60;
+        }
+
         timeFrameMins = TIMEFRAME_DEFAULT;
         boolean buildable = setTitle();
 
@@ -110,14 +117,11 @@ public class ContractHistorySceneController {
             Platform.runLater(()->{
                 contractHistoryList = contractHistoryService.getContractHistory(nonUniqueMarketId, nonUniqueContractId);
                 //System.out.println("Contract History List set.");
-
-                if(contractHistoryList == null){
-                    return;
-                }
-
+                if(contractHistoryList == null){return; }
                 setTitle();
                 buildContractHistoryChart();
                 buildContractHistoryTableView();
+                contractHistoryChart.setCreateSymbols(false);
             });
         }
         else{
@@ -146,7 +150,7 @@ public class ContractHistorySceneController {
                 @Override
                 protected void updateItem(String item, boolean empty) {
                     super.updateItem(item, empty);
-                    setText(empty ? "" : getItem().toString());
+                    setText(empty ? "" : getItem());
                     setGraphic(null);
                     TableRow<DisplayableMover> currentRow = getTableRow();
 
@@ -154,9 +158,9 @@ public class ContractHistorySceneController {
                         int change = Integer.parseInt(item);
                         if (!isEmpty()) {
                             if (change > 0)
-                                currentRow.setStyle("-fx-background-color:lightgreen");
+                                currentRow.setStyle("-fx-background-color:green");
                             else if (change < 0)
-                                currentRow.setStyle("-fx-background-color:#ff726f"); //light red sort of
+                                currentRow.setStyle("-fx-background-color:red"); //light red sort of
                             else{
                                 currentRow.setStyle("");//none
                             }
@@ -192,16 +196,13 @@ public class ContractHistorySceneController {
         XYChart.Series series = new XYChart.Series();
         series.setName("Contract History");
 
-        for (int i = 0; i < contractHistoryList.size(); i++) {
-            //if(i==0 || !contractHistoryList.get(i).getBuyYes().equals(contractHistoryList.get(i - 1).getBuyYes())){
-                DisplayableContractInfo dci = contractHistoryList.get(i);
-                if(Math.abs(Integer.parseInt(dci.getMinsFromCurrent())) > timeFrameMins){
-                    System.out.println("reached break at min from current = " + dci.getMinsFromCurrent());
-                    series.getData().add(new XYChart.Data(Integer.parseInt(dci.getMinsFromCurrent()), Double.parseDouble(dci.getBuyYes())));
-                    break;
-                }
+        for (DisplayableContractInfo dci : contractHistoryList) {
+            if (Math.abs(Integer.parseInt(dci.getMinsFromCurrent())) > timeFrameMins) {
+                System.out.println("reached break at min from current = " + dci.getMinsFromCurrent());
                 series.getData().add(new XYChart.Data(Integer.parseInt(dci.getMinsFromCurrent()), Double.parseDouble(dci.getBuyYes())));
-            //}
+                break;
+            }
+            series.getData().add(new XYChart.Data(Integer.parseInt(dci.getMinsFromCurrent()), Double.parseDouble(dci.getBuyYes())));
         }
         contractHistoryChart.getData().clear();
         contractHistoryChart.getData().add(series);
@@ -209,7 +210,7 @@ public class ContractHistorySceneController {
         chart_yAxis.setAutoRanging(false);
         chart_yAxis.setLowerBound(0.0);
         chart_yAxis.setUpperBound(1.0);
-        chart_yAxis.setTickUnit(0.05);
+        chart_yAxis.setTickUnit(0.01);
 
         currentTimeframeLabel.setText("current=" + timeFrameMins + " mins.");
     }
@@ -270,36 +271,39 @@ public class ContractHistorySceneController {
     private void updateChart() {
         try {
             timeFrameMins = Integer.parseInt(timeframeTextField.getText());
-        }catch(Exception e){
+        } catch (Exception e) {
             System.out.println("parse exception in updateChart method");
             timeFrameMins = TIMEFRAME_DEFAULT;
         }
-        if(timeFrameMins < 10){
+        if (timeFrameMins < 10) {
             System.out.println("timeframeMins < 10, setting to default.");
             timeFrameMins = TIMEFRAME_DEFAULT;
         }
 
         buildContractHistoryChart();
-        if(sma10_checkbox.isSelected()){ build_sma10Chart();}
-        if(sma60_checkbox.isSelected()){ build_sma60Chart();}
+        if (sma10_checkbox.isSelected()) {build_sma10Chart();}
+        if (sma60_checkbox.isSelected()) {build_sma60Chart();}
+
+        contractHistoryChart.setCreateSymbols(false);
     }
 
     private void build_sma60Chart() {
         XYChart.Series series = new XYChart.Series();
         series.setName("60min SMA");
 
-        for (int i = 0; i < contractHistoryList.size(); i++) {
-            //if(i==0 || !contractHistoryList.get(i).getSma60().equals(contractHistoryList.get(i - 1).getSma60())){
-                DisplayableContractInfo dci = contractHistoryList.get(i);
-                if(Math.abs(Integer.parseInt(dci.getMinsFromCurrent())) > timeFrameMins){
-                    //System.out.println("sma60: reached break at min from current = " + dci.getMinsFromCurrent());
-                    if(Double.parseDouble(dci.getSma60()) == 0.0){continue;}
-                    series.getData().add(new XYChart.Data(Integer.parseInt(dci.getMinsFromCurrent()), Double.parseDouble(dci.getSma60())));
-                    break;
+        for (DisplayableContractInfo dci : contractHistoryList) {
+            if (Math.abs(Integer.parseInt(dci.getMinsFromCurrent())) > timeFrameMins) {
+                //System.out.println("sma60: reached break at min from current = " + dci.getMinsFromCurrent());
+                if (Double.parseDouble(dci.getSma60()) == 0.0) {
+                    continue;
                 }
-                if(Double.parseDouble(dci.getSma60()) == 0.0){continue;}
                 series.getData().add(new XYChart.Data(Integer.parseInt(dci.getMinsFromCurrent()), Double.parseDouble(dci.getSma60())));
-            //}
+                break;
+            }
+            if (Double.parseDouble(dci.getSma60()) == 0.0) {
+                continue;
+            }
+            series.getData().add(new XYChart.Data(Integer.parseInt(dci.getMinsFromCurrent()), Double.parseDouble(dci.getSma60())));
         }
         contractHistoryChart.getData().add(series);
     }
@@ -309,18 +313,19 @@ public class ContractHistorySceneController {
         XYChart.Series series = new XYChart.Series();
         series.setName("10min SMA");
 
-        for (int i = 0; i < contractHistoryList.size(); i++) {
-            //if(i==0 || !contractHistoryList.get(i).getSma60().equals(contractHistoryList.get(i - 1).getSma60())){
-            DisplayableContractInfo dci = contractHistoryList.get(i);
-            if(Math.abs(Integer.parseInt(dci.getMinsFromCurrent())) > timeFrameMins){
+        for (DisplayableContractInfo dci : contractHistoryList) {
+            if (Math.abs(Integer.parseInt(dci.getMinsFromCurrent())) > timeFrameMins) {
                 //System.out.println("sma10: reached break at min from current = " + dci.getMinsFromCurrent());
-                if(Double.parseDouble(dci.getSma10()) == 0.0){continue;}
+                if (Double.parseDouble(dci.getSma10()) == 0.0) {
+                    continue;
+                }
                 series.getData().add(new XYChart.Data(Integer.parseInt(dci.getMinsFromCurrent()), Double.parseDouble(dci.getSma10())));
                 break;
             }
-            if(Double.parseDouble(dci.getSma10()) == 0.0){continue;}
+            if (Double.parseDouble(dci.getSma10()) == 0.0) {
+                continue;
+            }
             series.getData().add(new XYChart.Data(Integer.parseInt(dci.getMinsFromCurrent()), Double.parseDouble(dci.getSma10())));
-            //}
         }
         contractHistoryChart.getData().add(series);
 
