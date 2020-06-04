@@ -238,7 +238,7 @@ public class TrackedMarketsSceneController {
                     }//for each contract
             }//for each market
             if (tableData.isEmpty()) {
-                tableData.add(new DisplayableMC("---", "---", "Could not find any Market or Contract with any of the query terms.", "---", "---", "---", "---", "---"));
+                tableData.add(new DisplayableMC("---", "---", "Could not find any Tracked Market data. Are any Markets being tracked?", "---", "---", "---", "---", "---"));
             }
             trackedMarketsTable.setItems(tableData);
         }//if latest!=null

@@ -42,7 +42,7 @@ public class PA_AnalyzerGUI_Application extends Application {
     //called before start(), this init method is where we start the Spring Boot application that creates all our Services (etc) that we use.
     @Override
     public void init() {
-        System.out.println("Got into init() method");
+        //System.out.println("Got into init() method");
         String[] args = getParameters().getRaw().toArray(new String[0]);
 
         this.applicationContext = new SpringApplicationBuilder()

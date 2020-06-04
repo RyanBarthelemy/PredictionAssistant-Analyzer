@@ -19,7 +19,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,7 +48,6 @@ public class ContractHistorySceneController {
     private int nonUniqueContractId;
     private int nonUniqueMarketId;
     private String url = "null";
-    private final FxWeaver fxWeaver;
     private List<DisplayableContractInfo> contractHistoryList;
 
     private TableColumn changeColumn;
@@ -90,8 +88,7 @@ public class ContractHistorySceneController {
     @FXML // fx:id="sma60_checkbox"
     private CheckBox sma60_checkbox; // Value injected by FXMLLoader
 
-    public ContractHistorySceneController(FxWeaver fxWeaver) {
-        this.fxWeaver = fxWeaver;
+    public ContractHistorySceneController() {
         chart_xAxis = new NumberAxis();
         chart_yAxis = new NumberAxis();
 
